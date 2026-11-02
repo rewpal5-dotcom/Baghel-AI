@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Baghel AI</title>
+<meta name="theme-color" content="#0a0a0f">
+<style>
+  :root{
+    --bg:#0a0a0f; --bg2:#0e0e16; --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.10);
+    --ink:#f2f3f8; --muted:#9aa0b4; --purple:#8b5cf6; --purple2:#a855f7; --bubble:#6d28d9;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Arial,sans-serif;
+    -webkit-user-select:none;user-select:none}
+  #app{position:fixed;inset:0;display:flex;flex-direction:column;padding-bottom:58px}
+
+  /* ---------- header ---------- */
+  header{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:14px 16px 8px}
+  .menu{width:26px;display:flex;flex-direction:column;gap:5px;cursor:pointer}
+  .menu span{height:2.5px;background:var(--ink);border-radius:2px;opacity:.9}
+  .brand{font-size:21px;font-weight:800;letter-spacing:-.4px}
+  .brand b{color:var(--purple2)}
+  .hspacer{flex:1}
+  .hbtn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--ink);
+    background:transparent;border:0;cursor:pointer;font-size:18px}
+  .avatar{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid var(--purple);
+    display:grid;place-items:center;background:#1b1b26;font-size:13px;font-weight:800}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+
+  /* ---------- views ---------- */
+  .view{flex:1;display:none;flex-direction:column;min-height:0}
+  .view.on{display:flex}
+
+  /* ---------- home ---------- */
+  #home{align-items:center;justify-content:flex-start;padding:4px 18px 0;overflow:auto}
+  .logoWrap{margin-top:min(7vh,56px);position:relative;width:132px;height:132px;display:grid;place-items:center}
+  .logoWrap img{width:118px;height:118px;object-fit:contain;border-radius:26px;
+    box-shadow:0 18px 44px rgba(139,92,246,.35), 0 0 0 1px rgba(168,85,247,.25)}
+  .homeTitle{margin:14px 0 6px;font-size:33px;font-weight:800;letter-spacing:-1px;text-align:center}
+  .homeTitle b{color:var(--purple2)}
+  .tagline{color:var(--muted);font-size:14.5px;text-align:center;margin:0 0 4px}
+  .swirl{width:150px;height:16px;margin:2px 0 22px}
+  .swirl path{stroke:url(#g1);stroke-width:3;fill:none;stroke-linecap:round}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:420px}
+  .qcard{display:flex;align-items:center;gap:11px;padding:15px 14px;border:1px solid var(--line);
+    background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.035));
+    border-radius:18px;cursor:pointer;transition:transform .14s, border-color .14s}
+  .qcard:hover{border-color:rgba(168,85,247,.45)}
+  .qcard:active{transform:scale(.97)}
+  .qcard .ic{width:26px;height:26px;flex:0 0 auto;display:grid;place-items:center;color:#cfd3e6}
+  .qcard .tx{font-size:14px;line-height:1.25;font-weight:600;color:#e8eaf3}
+
+  /* ---------- chat ---------- */
+  #chatView{min-height:0}
+  .chatHead{display:flex;align-items:center;gap:10px;padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+  .chatHead .mini{width:34px;height:34px;object-fit:contain;border-radius:10px}
+  .chatHead .ttl{font-size:16px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:6px}
+  .chatHead .ttl b{color:var(--purple2)}
+  .chatHead .sub{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px}
+  .verified{width:13px;height:13px;border-radius:50%;background:var(--purple2);display:inline-grid;place-items:center;
+    font-size:8px;color:#fff;font-weight:900}
+  #msgs{flex:1;overflow-y:auto;padding:14px 14px 10px;display:flex;flex-direction:column;gap:12px;min-height:0;
+    scroll-behavior:smooth}
+  #msgs::-webkit-scrollbar{width:0}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+  .msg{animation:pop .22s ease both}
+  .msg{display:flex;gap:9px;max-width:88%}
+  .msg.me{align-self:flex-end;flex-direction:row-reverse}
+  .bubble{padding:12px 14px;border-radius:16px;font-size:14.2px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+  .msg.ai .bubble{background:#15151f;border:1px solid rgba(255,255,255,.07);border-top-left-radius:6px}
+  .msg.me .bubble{background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-top-right-radius:6px}
+  .mAv{width:30px;height:30px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:#15151f;
+    border:1px solid rgba(139,92,246,.5);overflow:hidden}
+  .mAv img{width:22px;height:22px;object-fit:contain;border-radius:6px}
+  .meta{font-size:10px;color:var(--muted);margin-top:5px;text-align:right;display:flex;gap:8px;justify-content:flex-end;align-items:center}
+  .copy{background:none;border:0;color:#7d8398;font-size:10.5px;cursor:pointer;padding:0;font-family:inherit}
+  .copy:active{color:var(--purple2)}
+  .msg.ai .bubble{line-height:1.6}
+  .msg.ai .bubble b{color:#fff}
+  .typing{display:flex;gap:4px;padding:4px 2px}
+  .typing i{width:7px;height:7px;border-radius:50%;background:#8b8fa3;display:block;animation:bl 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes bl{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+
+  .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:6px 14px 4px}
+  .qb{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;border-radius:14px;
+    border:1px solid var(--line);background:var(--card);color:#dfe2ee;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .qb svg{opacity:.9}
+
+  /* ---------- input bar ---------- */
+  .inputBar{flex:0 0 auto;display:flex;align-items:flex-end;gap:8px;margin:6px 12px 10px;padding:7px 7px 7px 8px;
+    background:#141420;border:1px solid rgba(255,255,255,.10);border-radius:26px;
+    box-shadow:0 8px 26px rgba(0,0,0,.35);transition:border-color .18s, box-shadow .18s}
+  .inputBar:focus-within{border-color:rgba(168,85,247,.55);box-shadow:0 8px 30px rgba(139,92,246,.22)}
+  .inputBar .plus{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.18);
+    display:grid;place-items:center;color:#cfd3e6;font-size:16px;cursor:pointer;flex:0 0 auto;background:none}
+  .inputBar input{flex:1;background:none;border:0;outline:none;color:var(--ink);font-size:15px;font-family:inherit;
+    min-width:0;padding:9px 2px}
+  .inputBar input::placeholder{color:#7d8398}
+  .ibtn{width:34px;height:34px;border-radius:50%;border:0;background:none;color:#cfd3e6;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
+  .send{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);border:0;
+    display:grid;place-items:center;cursor:pointer;flex:0 0 auto;box-shadow:0 6px 18px rgba(139,92,246,.4)}
+
+  /* ---------- bottom nav ---------- */
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;border-top:1px solid rgba(255,255,255,.07);
+    background:rgba(10,10,15,.96);backdrop-filter:blur(12px);padding-bottom:env(safe-area-inset-bottom)}
+  .nv{flex:1;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8b90a4;
+    font-size:11px;font-weight:600;cursor:pointer;position:relative;background:none;border:0;font-family:inherit}
+  .nv.on{color:var(--purple2)}
+  .nv.on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:52%;height:2.5px;
+    background:var(--purple2);border-radius:0 0 3px 3px}
+
+  /* ---------- history / settings ---------- */
+  .page{flex:1;overflow-y:auto;padding:14px 16px}
+  .page h2{margin:2px 0 12px;font-size:20px;letter-spacing:-.4px}
+  .row{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);background:var(--card);
+    border-radius:14px;margin-bottom:9px;cursor:pointer}
+  .row .t{flex:1;min-width:0}
+  .row .t .n{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .t .d{font-size:11px;color:var(--muted);margin-top:2px}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 10px;line-height:1.6}
+  .setRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;
+    border:1px solid var(--line);background:var(--card);border-radius:14px;margin-bottom:9px}
+  .setRow .n{font-size:13.5px;font-weight:700}
+  .setRow .d{font-size:11px;color:var(--muted);margin-top:2px}
+  .setRow input{background:#15151f;border:1px solid rgba(255,255,255,.1);color:var(--ink);border-radius:10px;
+    padding:8px 10px;font-size:12px;width:150px;font-family:inherit;outline:none}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px 14px;
+    font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+  .btn.primary{background:linear-gradient(135deg,#7c3aed,#a855f7);border:0;color:#fff}
+  .toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:rgba(30,30,45,.96);border:1px solid var(--line);color:#e9ebf5;padding:10px 16px;border-radius:12px;
+    font-size:12.5px;font-weight:600;z-index:60;transition:.22s;pointer-events:none;max-width:86vw;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- segmented control (engine picker) ---------- */
+  .seg{display:flex;gap:5px;flex-wrap:wrap;background:rgba(0,0,0,.28);border-radius:12px;padding:4px}
+  .seg button{border:0;background:none;color:var(--muted);font-weight:800;font-size:11.5px;
+    padding:8px 11px;border-radius:9px;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
+  .seg button:active{transform:scale(.97)}
+  .seg button.on{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;
+    box-shadow:0 6px 16px rgba(139,92,246,.35)}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== home ===== -->
+  <header id="homeHead">
+    <div class="menu" id="menuBtn"><span></span><span></span><span></span></div>
+    <div class="brand">Baghel <b>AI</b></div>
+    <div class="hspacer"></div>
+    <button class="hbtn" id="histBtn" title="History"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></button>
+  </header>
+
+  <div class="view on" id="home">
+    <div class="logoWrap"><img id="bigLogo" alt="Baghel AI"></div>
+    <div class="homeTitle">Baghel <b>AI</b></div>
+    <p class="tagline">Ask anything... I'm here to help you!</p>
+    <svg class="swirl" viewBox="0 0 150 16"><defs><linearGradient id="g1" x1="0" x2="1">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0"/><stop offset=".5" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></linearGradient></defs>
+      <path d="M4 12 Q75 -6 146 12"/></svg>
+
+    <div class="cards">
+      <div class="qcard" data-prompt="Mujhe kuch aasan bhasha mein samjhao: ">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7V16h5.6v-.5c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3z"/></svg></div><div class="tx">Explain<br>something</div>
+      </div>
+      <div class="qcard" data-prompt="Mere liye ek message likho: ">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div><div class="tx">Write a<br>message</div>
+      </div>
+      <div class="qcard" data-prompt="Mujhe ek image ka idea do: ">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 18 5-5 4 4 3-3 4 4"/></svg></div><div class="tx">Create<br>an image</div>
+      </div>
+      <div class="qcard" data-prompt="Mujhe kuch naye ideas do: ">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></div><div class="tx">Give me<br>ideas</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== chat ===== -->
+  <div class="view" id="chatView">
+    <div class="chatHead">
+      <img class="mini" id="chatLogo" alt="">
+      <div>
+        <div class="ttl">Baghel <b>AI</b></div>
+        <div class="sub">Aapka Apna AI <span class="verified">✓</span></div>
+      </div>
+      <div class="hspacer"></div>
+      <div class="avatar" id="avatar">S</div>
+    </div>
+
+    <div id="msgs"></div>
+
+    <div class="quick">
+      <button class="qb" id="qPhoto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 18 5-5 4 4 3-3 4 4"/></svg><span>Photo</span></button>
+      
+      <button class="qb" id="qVoice"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg><span>Voice</span></button>
+      <button class="qb" id="qNew"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg><span>New chat</span></button>
+    </div>
+
+    <div class="inputBar">
+      <button class="plus" id="plusBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
+      <input id="chatInput" placeholder="Type a message..." autocomplete="off">
+      <button class="ibtn" id="attachBtn" title="Attach"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5 12.5 20a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7"/></svg></button>
+      <button class="ibtn" id="micBtn" title="Voice"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+      <button class="send" id="sendBtn" title="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-7 16-2.5-6.5L4 12z"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ===== history ===== -->
+  <div class="view" id="historyView">
+    <div class="page">
+      <h2>History</h2>
+      <div id="histList"></div>
+    </div>
+  </div>
+
+  <!-- ===== settings ===== -->
+  <div class="view" id="settingsView">
+    <div class="page">
+      <h2>Settings</h2>
+
+      <div class="setRow">
+        <div><div class="n">Aapka naam</div><div class="d">AI isi naam se bulayega</div></div>
+        <input id="setName" placeholder="Naam">
+      </div>
+
+      <div class="setRow" style="flex-direction:column;align-items:stretch;gap:10px">
+        <div><div class="n">AI engine</div><div class="d" id="modeDesc">Local knowledge (offline)</div></div>
+        <div class="seg" id="segMode">
+          <button data-v="local">Offline</button>
+          <button data-v="server">Apna server</button>
+          <button data-v="ollama">Local model</button>
+        </div>
+      </div>
+
+      <div class="setRow" id="serverRow" style="display:none">
+        <div style="flex:1"><div class="n">Server URL</div><div class="d" id="serverHint">python api.py chalayein</div></div>
+        <input id="setServer" placeholder="http://192.168.1.5:8000">
+      </div>
+
+      <div class="setRow" id="modelRow" style="display:none">
+        <div style="flex:1"><div class="n">Model name</div><div class="d">PC par chalne wale model ka naam</div></div>
+        <input id="setModel" placeholder="llama3.2">
+      </div>
+        <input id="setKey" placeholder="AIza..." type="password">
+      </div>
+
+      <div class="setRow">
+        <div><div class="n">Chat clear karein</div><div class="d">Saari baatein mit jayengi</div></div>
+        <button class="btn" id="clearBtn">Clear</button>
+      </div>
+
+      <div class="setRow">
+        <div><div class="n">Baghel AI</div><div class="d">v1.0 · offline shell + AI chat</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== bottom nav ===== -->
+
+<nav>
+    <button class="nv on" data-view="home" id="navHome"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg><span id="navHomeLbl">Home</span></button>
+    <button class="nv" data-view="history" id="navHist"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span>History</span></button>
+    <button class="nv" data-view="settings" id="navSet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Settings</span></button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var LOGO = "logo.png";
+
+var KB = [{"q":"Namaste","a":"Namaste! Main Baghel AI hoon. Aap kaise hain?"},{"q":"Hello","a":"Hello! Main Baghel AI hoon. Bataiye, kya madad karun?"},{"q":"Hi","a":"Hi! Kaise hain aap? Kuch poochhna hai?"},{"q":"Tumhara naam kya hai?","a":"Mera naam Baghel AI hai."},{"q":"Tum kaun ho?","a":"Main Baghel AI hoon, ek chhota local language model jo aapke phone ya computer par chalta hai."},{"q":"Tum kya kar sakte ho?","a":"Main sawaalon ke jawab de sakta hoon, simple salah de sakta hoon, aur Hindi ya English mein baat kar sakta hoon."},{"q":"Tum kahan se seekhe ho?","a":"Main is project ke training text se seekha hoon. Koi badi company ka model nahi hoon."},{"q":"Kya tum internet use karte ho?","a":"Nahi. Main poora local chalta hoon, internet ki zaroorat nahi."},{"q":"Aapka shukriya","a":"Aapka swagat hai! Kuch aur poochhna ho to bataiye."},{"q":"Thank you","a":"You are welcome!"},{"q":"Bye","a":"Phir milenge! Apna khayal rakhiye."},{"q":"Good morning","a":"Good morning! Aaj ka din shubh ho."},{"q":"Good night","a":"Good night! Aaram kijiye."},{"q":"Kaise ho?","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Mujhe madad chahiye","a":"Bilkul. Bataiye kis cheez mein madad chahiye - padhai, kaam, health, ya kuch aur?"},{"q":"Kya tum padhai mein madad kar sakte ho?","a":"Haan. Main simple bhasha mein samjha sakta hoon. Kaunsa vishay hai?"},{"q":"Mujhe Hindi mein jawab do","a":"Theek hai, main Hindi mein jawab dunga."},{"q":"Mujhe English mein jawab do","a":"Sure, I will answer in English."},{"q":"Tum maths kar sakte ho?","a":"Simple hisaab kar sakta hoon. Sawaal likhiye."},{"q":"2 plus 2 kitna hota hai?","a":"2 plus 2 barabar 4 hota hai."},{"q":"10 mein se 3 ghatao","a":"10 mein se 3 ghata kar 7 bachta hai."},{"q":"5 ka table batao","a":"5, 10, 15, 20, 25, 30, 35, 40, 45, 50."},{"q":"Ek din mein kitne ghante hote hain?","a":"Ek din mein 24 ghante hote hain."},{"q":"Ek saal mein kitne mahine hote hain?","a":"Ek saal mein 12 mahine hote hain."},{"q":"Bharat ki rajdhani kya hai?","a":"Bharat ki rajdhani New Delhi hai."},{"q":"Bharat mein kitne rajya hain?","a":"Bharat mein 28 rajya hain."},{"q":"Bharat ka rashtrapati kaun hai?","a":"Ye jankari badalti rehti hai, isliye taaza khabar dekh lijiye."},{"q":"Sabse lambi nadi kaun si hai?","a":"Bharat mein Ganga sabse lambi nadi hai."},{"q":"Taj Mahal kahan hai?","a":"Taj Mahal Agra, Uttar Pradesh mein hai."},{"q":"Bharat ka rashtriya pakshi kaun hai?","a":"Bharat ka rashtriya pakshi mor hai."},{"q":"Bharat ka rashtriya phool kaun hai?","a":"Bharat ka rashtriya phool kamal hai."},{"q":"Surya kis disha se ugta hai?","a":"Surya purv disha se ugta hai."},{"q":"Ek hafte mein kitne din hote hain?","a":"Ek hafte mein 7 din hote hain."},{"q":"Sehat kaise banaye rakhein?","a":"Roz thoda chalein, paani zyada piyein, neend poori lein aur junk food kam karein."},{"q":"Subah jaldi uthne ke fayde kya hain?","a":"Subah jaldi uthne se din ki shuruaat shaant rehti hai aur kaam samay par hota hai."},{"q":"Paani kitna peena chahiye?","a":"Din mein 8 se 10 glass paani peena theek rehta hai."},{"q":"Sar dard ho raha hai kya karun?","a":"Aaram karein, paani piyein. Zyada dard ho to doctor se milein."},{"q":"Neend nahi aa rahi","a":"Sone se pehle mobile band karein, kamre ki roshni dheemi karein, aur roz ek hi samay par sone ki koshish karein."},{"q":"Mujhe thakaan lag rahi hai","a":"Thoda break lein, paani piyein aur gehri saans lein. Lambi thakaan ho to doctor se salah lein."},{"q":"Exercise kaunsi karein?","a":"Shuruaat mein roz 20 minute tez chalna kaafi hai. Dheere-dheere badhaiye."},{"q":"Kheti mein paani kab dena chahiye?","a":"Mitti sookhi lage tab paani dein. Subah ya shaam dena behtar hai."},{"q":"Gehun kab boyi jaati hai?","a":"Gehun mukhya roop se October se December ke beech boyi jaati hai."},{"q":"Dhan ki kheti kaise karein?","a":"Khad wali mitti, theek paani aur accha beej chunein. Nursery se paudh taiyar karein."},{"q":"Khad kab daalein?","a":"Buwai se pehle mitti taiyar karte samay aur beech mein zaroorat par daalein."},{"q":"Fasal mein keede lag gaye hain","a":"Pehle patte dekh kar pehchan karein, phir krishi vigyan kendra se salah lein."},{"q":"Exam ki taiyari kaise karein?","a":"Roz ek samay par padhein, chhote-chhote hisson mein baantein, aur har hafte test dein."},{"q":"Yaad karne ka tareeka batao","a":"Padhne ke baad bina dekhe likh kar dekhein. Isse yaad rehta hai."},{"q":"English kaise sudharein?","a":"Roz 10 minute bol kar practice karein, naye shabd likhein, aur awaaz mein padhein."},{"q":"Computer sikna hai","a":"Shuruaat typing aur basic se karein, phir ek language jaise Python seekhein."},{"q":"Coding kaise seekhein?","a":"Pehle basic logic, phir ek language. Roz 30 minute practice karein."},{"q":"Android app kaise banayein?","a":"Android Studio install karein, ek chhota project banayein, phir dheere-dheere features jodein."},{"q":"Python kya hai?","a":"Python ek aasan programming language hai, jise padhai aur software dono mein use karte hain."},{"q":"AI kya hai?","a":"AI ya artificial intelligence, machine ko insaan jaisa seekhne aur faisla lene ki koshish hai."},{"q":"Machine learning kya hai?","a":"Machine learning mein computer data se pattern seekhta hai, bina har rule likhe."},{"q":"Tum kaise kaam karte ho?","a":"Main ek chhota transformer model hoon. Aapka sawaal token mein badalta hoon aur shabd ek-ek karke aage ka text banata hoon."},{"q":"Transformer kya hai?","a":"Transformer ek neural network hai jo attention se shabdon ka sambandh samajhta hai."},{"q":"Model kitna bada hai?","a":"Ye bahut chhota model hai, isliye iski jaankari seemit hai."},{"q":"Kya tum ChatGPT se behtar ho?","a":"Nahi. Main ek chhota local model hoon. Bade models zyada jaankari rakhte hain."},{"q":"Mann nahi lag raha","a":"Thoda break lein, paani piyein aur ek chhota kaam poora karein. Chhoti jeet mann halka karti hai."},{"q":"Mujhe dar lag raha hai","a":"Gehri saans lein. Jo darr hai use chhote hisson mein likhein, phir ek chhota kadam lein."},{"q":"Kaise safal hon?","a":"Ek lakshya tay karein, roz thoda kaam karein, aur har hafte apni mehnat dekhein."},{"q":"Time management kaise karein?","a":"Din ke 3 sabse zaroori kaam likhein aur pehle wahi karein."},{"q":"Mujhe himmat chahiye","a":"Aap kar sakte hain. Ek chhota kadam aaj lein, phir agla."},{"q":"Gaon mein kaunse kaam hote hain?","a":"Kheti, pashupalan, chhote dhandhe, aur rozmarra ke kaam gaon mein hote hain."},{"q":"Pani bachane ke tarike batao","a":"Nal band karein, boond-boond sinchai karein, aur barish ka paani sanchay karein."},{"q":"Bijli bachane ke upay","a":"Bekar batti band karein, LED use karein, aur pankha AC se kam chalayein."},{"q":"Safai kyun zaroori hai?","a":"Safai se bimari kam hoti hai aur sehat acchi rehti hai."},{"q":"Namaste","a":"Namaste! Main Baghel AI hoon."},{"q":"Namaste","a":"Hello! Bataiye kya madad karun?"},{"q":"Hello","a":"Namaste! Main Baghel AI hoon."},{"q":"Hello","a":"Hello! Bataiye kya madad karun?"},{"q":"Hi","a":"Namaste! Main Baghel AI hoon."},{"q":"Hi","a":"Hello! Bataiye kya madad karun?"},{"q":"Ram Ram","a":"Namaste! Main Baghel AI hoon."},{"q":"Ram Ram","a":"Hello! Bataiye kya madad karun?"},{"q":"Jai Shri Ram","a":"Namaste! Main Baghel AI hoon."},{"q":"Jai Shri Ram","a":"Hello! Bataiye kya madad karun?"},{"q":"Good morning","a":"Namaste! Main Baghel AI hoon."},{"q":"Good morning","a":"Hello! Bataiye kya madad karun?"},{"q":"Salaam","a":"Namaste! Main Baghel AI hoon."},{"q":"Salaam","a":"Hello! Bataiye kya madad karun?"},{"q":"Shukriya","a":"Aapka swagat hai!"},{"q":"Shukriya","a":"Khushi hui madad karke."},{"q":"Dhanyavaad","a":"Aapka swagat hai!"},{"q":"Dhanyavaad","a":"Khushi hui madad karke."},{"q":"Thank you","a":"Aapka swagat hai!"},{"q":"Thank you","a":"Khushi hui madad karke."},{"q":"Thanks","a":"Aapka swagat hai!"},{"q":"Thanks","a":"Khushi hui madad karke."},{"q":"Bahut accha","a":"Aapka swagat hai!"},{"q":"Bahut accha","a":"Khushi hui madad karke."},{"q":"Kaise ho","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Kaise ho","a":"Sab badhiya! Aap sunaiye."},{"q":"Aap kaise hain","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Aap kaise hain","a":"Sab badhiya! Aap sunaiye."},{"q":"Tum theek ho?","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Tum theek ho?","a":"Sab badhiya! Aap sunaiye."},{"q":"Sab badhiya?","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Sab badhiya?","a":"Sab badhiya! Aap sunaiye."},{"q":"Namaste?","a":"Namaste! Main Baghel AI hoon. Aap kaise hain?"},{"q":"Namaste batao","a":"Namaste! Main Baghel AI hoon. Aap kaise hain?"},{"q":"Namaste bataiye","a":"Namaste! Main Baghel AI hoon. Aap kaise hain?"},{"q":"kripya Namaste batayein","a":"Namaste! Main Baghel AI hoon. Aap kaise hain?"},{"q":"Namaste kya hai","a":"Namaste! Main Baghel AI hoon. Aap kaise hain?"},{"q":"Hello?","a":"Hello! Main Baghel AI hoon. Bataiye, kya madad karun?"},{"q":"Hello batao","a":"Hello! Main Baghel AI hoon. Bataiye, kya madad karun?"},{"q":"Hello bataiye","a":"Hello! Main Baghel AI hoon. Bataiye, kya madad karun?"},{"q":"kripya Hello batayein","a":"Hello! Main Baghel AI hoon. Bataiye, kya madad karun?"},{"q":"Hello kya hai","a":"Hello! Main Baghel AI hoon. Bataiye, kya madad karun?"},{"q":"Hi?","a":"Hi! Kaise hain aap? Kuch poochhna hai?"},{"q":"Hi batao","a":"Hi! Kaise hain aap? Kuch poochhna hai?"},{"q":"Hi bataiye","a":"Hi! Kaise hain aap? Kuch poochhna hai?"},{"q":"kripya Hi batayein","a":"Hi! Kaise hain aap? Kuch poochhna hai?"},{"q":"Hi kya hai","a":"Hi! Kaise hain aap? Kuch poochhna hai?"},{"q":"Tumhara naam kya hai","a":"Mera naam Baghel AI hai."},{"q":"Tumhara naam kya hai batao","a":"Mera naam Baghel AI hai."},{"q":"Tumhara naam kya hai bataiye","a":"Mera naam Baghel AI hai."},{"q":"kripya Tumhara naam kya hai batayein","a":"Mera naam Baghel AI hai."},{"q":"Tumhara naam kya hai kya hai","a":"Mera naam Baghel AI hai."},{"q":"Tum kaun ho","a":"Main Baghel AI hoon, ek chhota local language model jo aapke phone ya computer par chalta hai."},{"q":"Tum kaun ho batao","a":"Main Baghel AI hoon, ek chhota local language model jo aapke phone ya computer par chalta hai."},{"q":"Tum kaun ho bataiye","a":"Main Baghel AI hoon, ek chhota local language model jo aapke phone ya computer par chalta hai."},{"q":"kripya Tum kaun ho batayein","a":"Main Baghel AI hoon, ek chhota local language model jo aapke phone ya computer par chalta hai."},{"q":"Tum kaun ho kya hai","a":"Main Baghel AI hoon, ek chhota local language model jo aapke phone ya computer par chalta hai."},{"q":"Tum kya kar sakte ho","a":"Main sawaalon ke jawab de sakta hoon, simple salah de sakta hoon, aur Hindi ya English mein baat kar sakta hoon."},{"q":"Tum kya kar sakte ho batao","a":"Main sawaalon ke jawab de sakta hoon, simple salah de sakta hoon, aur Hindi ya English mein baat kar sakta hoon."},{"q":"Tum kya kar sakte ho bataiye","a":"Main sawaalon ke jawab de sakta hoon, simple salah de sakta hoon, aur Hindi ya English mein baat kar sakta hoon."},{"q":"kripya Tum kya kar sakte ho batayein","a":"Main sawaalon ke jawab de sakta hoon, simple salah de sakta hoon, aur Hindi ya English mein baat kar sakta hoon."},{"q":"Tum kya kar sakte ho kya hai","a":"Main sawaalon ke jawab de sakta hoon, simple salah de sakta hoon, aur Hindi ya English mein baat kar sakta hoon."},{"q":"Tum kahan se seekhe ho","a":"Main is project ke training text se seekha hoon. Koi badi company ka model nahi hoon."},{"q":"Tum kahan se seekhe ho batao","a":"Main is project ke training text se seekha hoon. Koi badi company ka model nahi hoon."},{"q":"Tum kahan se seekhe ho bataiye","a":"Main is project ke training text se seekha hoon. Koi badi company ka model nahi hoon."},{"q":"kripya Tum kahan se seekhe ho batayein","a":"Main is project ke training text se seekha hoon. Koi badi company ka model nahi hoon."},{"q":"Tum kahan se seekhe ho kya hai","a":"Main is project ke training text se seekha hoon. Koi badi company ka model nahi hoon."},{"q":"Kya tum internet use karte ho","a":"Nahi. Main poora local chalta hoon, internet ki zaroorat nahi."},{"q":"Kya tum internet use karte ho batao","a":"Nahi. Main poora local chalta hoon, internet ki zaroorat nahi."},{"q":"Kya tum internet use karte ho bataiye","a":"Nahi. Main poora local chalta hoon, internet ki zaroorat nahi."},{"q":"kripya Kya tum internet use karte ho batayein","a":"Nahi. Main poora local chalta hoon, internet ki zaroorat nahi."},{"q":"Kya tum internet use karte ho kya hai","a":"Nahi. Main poora local chalta hoon, internet ki zaroorat nahi."},{"q":"Aapka shukriya?","a":"Aapka swagat hai! Kuch aur poochhna ho to bataiye."},{"q":"Aapka shukriya batao","a":"Aapka swagat hai! Kuch aur poochhna ho to bataiye."},{"q":"Aapka shukriya bataiye","a":"Aapka swagat hai! Kuch aur poochhna ho to bataiye."},{"q":"kripya Aapka shukriya batayein","a":"Aapka swagat hai! Kuch aur poochhna ho to bataiye."},{"q":"Aapka shukriya kya hai","a":"Aapka swagat hai! Kuch aur poochhna ho to bataiye."},{"q":"Thank you?","a":"You are welcome!"},{"q":"Thank you batao","a":"You are welcome!"},{"q":"Thank you bataiye","a":"You are welcome!"},{"q":"kripya Thank you batayein","a":"You are welcome!"},{"q":"Thank you kya hai","a":"You are welcome!"},{"q":"Bye?","a":"Phir milenge! Apna khayal rakhiye."},{"q":"Bye batao","a":"Phir milenge! Apna khayal rakhiye."},{"q":"Bye bataiye","a":"Phir milenge! Apna khayal rakhiye."},{"q":"kripya Bye batayein","a":"Phir milenge! Apna khayal rakhiye."},{"q":"Bye kya hai","a":"Phir milenge! Apna khayal rakhiye."},{"q":"Good morning?","a":"Good morning! Aaj ka din shubh ho."},{"q":"Good morning batao","a":"Good morning! Aaj ka din shubh ho."},{"q":"Good morning bataiye","a":"Good morning! Aaj ka din shubh ho."},{"q":"kripya Good morning batayein","a":"Good morning! Aaj ka din shubh ho."},{"q":"Good morning kya hai","a":"Good morning! Aaj ka din shubh ho."},{"q":"Good night?","a":"Good night! Aaram kijiye."},{"q":"Good night batao","a":"Good night! Aaram kijiye."},{"q":"Good night bataiye","a":"Good night! Aaram kijiye."},{"q":"kripya Good night batayein","a":"Good night! Aaram kijiye."},{"q":"Good night kya hai","a":"Good night! Aaram kijiye."},{"q":"Kaise ho batao","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Kaise ho bataiye","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"kripya Kaise ho batayein","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Kaise ho kya hai","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Mujhe madad chahiye?","a":"Bilkul. Bataiye kis cheez mein madad chahiye - padhai, kaam, health, ya kuch aur?"},{"q":"Mujhe madad chahiye batao","a":"Bilkul. Bataiye kis cheez mein madad chahiye - padhai, kaam, health, ya kuch aur?"},{"q":"Mujhe madad chahiye bataiye","a":"Bilkul. Bataiye kis cheez mein madad chahiye - padhai, kaam, health, ya kuch aur?"},{"q":"kripya Mujhe madad chahiye batayein","a":"Bilkul. Bataiye kis cheez mein madad chahiye - padhai, kaam, health, ya kuch aur?"},{"q":"Mujhe madad chahiye kya hai","a":"Bilkul. Bataiye kis cheez mein madad chahiye - padhai, kaam, health, ya kuch aur?"},{"q":"Kya tum padhai mein madad kar sakte ho","a":"Haan. Main simple bhasha mein samjha sakta hoon. Kaunsa vishay hai?"},{"q":"Kya tum padhai mein madad kar sakte ho batao","a":"Haan. Main simple bhasha mein samjha sakta hoon. Kaunsa vishay hai?"},{"q":"Kya tum padhai mein madad kar sakte ho bataiye","a":"Haan. Main simple bhasha mein samjha sakta hoon. Kaunsa vishay hai?"},{"q":"kripya Kya tum padhai mein madad kar sakte ho batayein","a":"Haan. Main simple bhasha mein samjha sakta hoon. Kaunsa vishay hai?"},{"q":"Kya tum padhai mein madad kar sakte ho kya hai","a":"Haan. Main simple bhasha mein samjha sakta hoon. Kaunsa vishay hai?"},{"q":"Mujhe Hindi mein jawab do?","a":"Theek hai, main Hindi mein jawab dunga."},{"q":"Mujhe Hindi mein jawab do batao","a":"Theek hai, main Hindi mein jawab dunga."},{"q":"Mujhe Hindi mein jawab do bataiye","a":"Theek hai, main Hindi mein jawab dunga."},{"q":"kripya Mujhe Hindi mein jawab do batayein","a":"Theek hai, main Hindi mein jawab dunga."},{"q":"Mujhe Hindi mein jawab do kya hai","a":"Theek hai, main Hindi mein jawab dunga."},{"q":"Mujhe English mein jawab do?","a":"Sure, I will answer in English."},{"q":"Mujhe English mein jawab do batao","a":"Sure, I will answer in English."},{"q":"Mujhe English mein jawab do bataiye","a":"Sure, I will answer in English."},{"q":"kripya Mujhe English mein jawab do batayein","a":"Sure, I will answer in English."},{"q":"Mujhe English mein jawab do kya hai","a":"Sure, I will answer in English."},{"q":"Tum maths kar sakte ho","a":"Simple hisaab kar sakta hoon. Sawaal likhiye."},{"q":"Tum maths kar sakte ho batao","a":"Simple hisaab kar sakta hoon. Sawaal likhiye."},{"q":"Tum maths kar sakte ho bataiye","a":"Simple hisaab kar sakta hoon. Sawaal likhiye."},{"q":"kripya Tum maths kar sakte ho batayein","a":"Simple hisaab kar sakta hoon. Sawaal likhiye."},{"q":"Tum maths kar sakte ho kya hai","a":"Simple hisaab kar sakta hoon. Sawaal likhiye."},{"q":"2 plus 2 kitna hota hai","a":"2 plus 2 barabar 4 hota hai."},{"q":"2 plus 2 kitna hota hai batao","a":"2 plus 2 barabar 4 hota hai."},{"q":"2 plus 2 kitna hota hai bataiye","a":"2 plus 2 barabar 4 hota hai."},{"q":"kripya 2 plus 2 kitna hota hai batayein","a":"2 plus 2 barabar 4 hota hai."},{"q":"2 plus 2 kitna hota hai kya hai","a":"2 plus 2 barabar 4 hota hai."},{"q":"10 mein se 3 ghatao?","a":"10 mein se 3 ghata kar 7 bachta hai."},{"q":"10 mein se 3 ghatao batao","a":"10 mein se 3 ghata kar 7 bachta hai."},{"q":"10 mein se 3 ghatao bataiye","a":"10 mein se 3 ghata kar 7 bachta hai."},{"q":"kripya 10 mein se 3 ghatao batayein","a":"10 mein se 3 ghata kar 7 bachta hai."},{"q":"10 mein se 3 ghatao kya hai","a":"10 mein se 3 ghata kar 7 bachta hai."},{"q":"5 ka table batao?","a":"5, 10, 15, 20, 25, 30, 35, 40, 45, 50."},{"q":"5 ka table batao batao","a":"5, 10, 15, 20, 25, 30, 35, 40, 45, 50."},{"q":"5 ka table batao bataiye","a":"5, 10, 15, 20, 25, 30, 35, 40, 45, 50."},{"q":"kripya 5 ka table batao batayein","a":"5, 10, 15, 20, 25, 30, 35, 40, 45, 50."},{"q":"5 ka table batao kya hai","a":"5, 10, 15, 20, 25, 30, 35, 40, 45, 50."},{"q":"Ek din mein kitne ghante hote hain","a":"Ek din mein 24 ghante hote hain."},{"q":"Ek din mein kitne ghante hote hain batao","a":"Ek din mein 24 ghante hote hain."},{"q":"Ek din mein kitne ghante hote hain bataiye","a":"Ek din mein 24 ghante hote hain."},{"q":"kripya Ek din mein kitne ghante hote hain batayein","a":"Ek din mein 24 ghante hote hain."},{"q":"Ek din mein kitne ghante hote hain kya hai","a":"Ek din mein 24 ghante hote hain."},{"q":"Ek saal mein kitne mahine hote hain","a":"Ek saal mein 12 mahine hote hain."},{"q":"Ek saal mein kitne mahine hote hain batao","a":"Ek saal mein 12 mahine hote hain."},{"q":"Ek saal mein kitne mahine hote hain bataiye","a":"Ek saal mein 12 mahine hote hain."},{"q":"kripya Ek saal mein kitne mahine hote hain batayein","a":"Ek saal mein 12 mahine hote hain."},{"q":"Ek saal mein kitne mahine hote hain kya hai","a":"Ek saal mein 12 mahine hote hain."},{"q":"Bharat ki rajdhani kya hai","a":"Bharat ki rajdhani New Delhi hai."},{"q":"Bharat ki rajdhani kya hai batao","a":"Bharat ki rajdhani New Delhi hai."},{"q":"Bharat ki rajdhani kya hai bataiye","a":"Bharat ki rajdhani New Delhi hai."},{"q":"kripya Bharat ki rajdhani kya hai batayein","a":"Bharat ki rajdhani New Delhi hai."},{"q":"Bharat ki rajdhani kya hai kya hai","a":"Bharat ki rajdhani New Delhi hai."},{"q":"Bharat mein kitne rajya hain","a":"Bharat mein 28 rajya hain."},{"q":"Bharat mein kitne rajya hain batao","a":"Bharat mein 28 rajya hain."},{"q":"Bharat mein kitne rajya hain bataiye","a":"Bharat mein 28 rajya hain."},{"q":"kripya Bharat mein kitne rajya hain batayein","a":"Bharat mein 28 rajya hain."},{"q":"Bharat mein kitne rajya hain kya hai","a":"Bharat mein 28 rajya hain."},{"q":"Bharat ka rashtrapati kaun hai","a":"Ye jankari badalti rehti hai, isliye taaza khabar dekh lijiye."},{"q":"Bharat ka rashtrapati kaun hai batao","a":"Ye jankari badalti rehti hai, isliye taaza khabar dekh lijiye."},{"q":"Bharat ka rashtrapati kaun hai bataiye","a":"Ye jankari badalti rehti hai, isliye taaza khabar dekh lijiye."},{"q":"kripya Bharat ka rashtrapati kaun hai batayein","a":"Ye jankari badalti rehti hai, isliye taaza khabar dekh lijiye."},{"q":"Bharat ka rashtrapati kaun hai kya hai","a":"Ye jankari badalti rehti hai, isliye taaza khabar dekh lijiye."},{"q":"Sabse lambi nadi kaun si hai","a":"Bharat mein Ganga sabse lambi nadi hai."},{"q":"Sabse lambi nadi kaun si hai batao","a":"Bharat mein Ganga sabse lambi nadi hai."},{"q":"Sabse lambi nadi kaun si hai bataiye","a":"Bharat mein Ganga sabse lambi nadi hai."},{"q":"kripya Sabse lambi nadi kaun si hai batayein","a":"Bharat mein Ganga sabse lambi nadi hai."},{"q":"Sabse lambi nadi kaun si hai kya hai","a":"Bharat mein Ganga sabse lambi nadi hai."},{"q":"Taj Mahal kahan hai","a":"Taj Mahal Agra, Uttar Pradesh mein hai."},{"q":"Taj Mahal kahan hai batao","a":"Taj Mahal Agra, Uttar Pradesh mein hai."},{"q":"Taj Mahal kahan hai bataiye","a":"Taj Mahal Agra, Uttar Pradesh mein hai."},{"q":"kripya Taj Mahal kahan hai batayein","a":"Taj Mahal Agra, Uttar Pradesh mein hai."},{"q":"Taj Mahal kahan hai kya hai","a":"Taj Mahal Agra, Uttar Pradesh mein hai."},{"q":"Bharat ka rashtriya pakshi kaun hai","a":"Bharat ka rashtriya pakshi mor hai."},{"q":"Bharat ka rashtriya pakshi kaun hai batao","a":"Bharat ka rashtriya pakshi mor hai."},{"q":"Bharat ka rashtriya pakshi kaun hai bataiye","a":"Bharat ka rashtriya pakshi mor hai."},{"q":"kripya Bharat ka rashtriya pakshi kaun hai batayein","a":"Bharat ka rashtriya pakshi mor hai."},{"q":"Bharat ka rashtriya pakshi kaun hai kya hai","a":"Bharat ka rashtriya pakshi mor hai."},{"q":"Bharat ka rashtriya phool kaun hai","a":"Bharat ka rashtriya phool kamal hai."},{"q":"Bharat ka rashtriya phool kaun hai batao","a":"Bharat ka rashtriya phool kamal hai."},{"q":"Bharat ka rashtriya phool kaun hai bataiye","a":"Bharat ka rashtriya phool kamal hai."},{"q":"kripya Bharat ka rashtriya phool kaun hai batayein","a":"Bharat ka rashtriya phool kamal hai."},{"q":"Bharat ka rashtriya phool kaun hai kya hai","a":"Bharat ka rashtriya phool kamal hai."},{"q":"Surya kis disha se ugta hai","a":"Surya purv disha se ugta hai."},{"q":"Surya kis disha se ugta hai batao","a":"Surya purv disha se ugta hai."},{"q":"Surya kis disha se ugta hai bataiye","a":"Surya purv disha se ugta hai."},{"q":"kripya Surya kis disha se ugta hai batayein","a":"Surya purv disha se ugta hai."},{"q":"Surya kis disha se ugta hai kya hai","a":"Surya purv disha se ugta hai."},{"q":"Ek hafte mein kitne din hote hain","a":"Ek hafte mein 7 din hote hain."},{"q":"Ek hafte mein kitne din hote hain batao","a":"Ek hafte mein 7 din hote hain."},{"q":"Ek hafte mein kitne din hote hain bataiye","a":"Ek hafte mein 7 din hote hain."},{"q":"kripya Ek hafte mein kitne din hote hain batayein","a":"Ek hafte mein 7 din hote hain."},{"q":"Ek hafte mein kitne din hote hain kya hai","a":"Ek hafte mein 7 din hote hain."},{"q":"Sehat kaise banaye rakhein","a":"Roz thoda chalein, paani zyada piyein, neend poori lein aur junk food kam karein."},{"q":"Sehat kaise banaye rakhein batao","a":"Roz thoda chalein, paani zyada piyein, neend poori lein aur junk food kam karein."},{"q":"Sehat kaise banaye rakhein bataiye","a":"Roz thoda chalein, paani zyada piyein, neend poori lein aur junk food kam karein."},{"q":"kripya Sehat kaise banaye rakhein batayein","a":"Roz thoda chalein, paani zyada piyein, neend poori lein aur junk food kam karein."},{"q":"Sehat kaise banaye rakhein kya hai","a":"Roz thoda chalein, paani zyada piyein, neend poori lein aur junk food kam karein."},{"q":"Subah jaldi uthne ke fayde kya hain","a":"Subah jaldi uthne se din ki shuruaat shaant rehti hai aur kaam samay par hota hai."},{"q":"Subah jaldi uthne ke fayde kya hain batao","a":"Subah jaldi uthne se din ki shuruaat shaant rehti hai aur kaam samay par hota hai."},{"q":"Subah jaldi uthne ke fayde kya hain bataiye","a":"Subah jaldi uthne se din ki shuruaat shaant rehti hai aur kaam samay par hota hai."},{"q":"kripya Subah jaldi uthne ke fayde kya hain batayein","a":"Subah jaldi uthne se din ki shuruaat shaant rehti hai aur kaam samay par hota hai."},{"q":"Subah jaldi uthne ke fayde kya hain kya hai","a":"Subah jaldi uthne se din ki shuruaat shaant rehti hai aur kaam samay par hota hai."},{"q":"Paani kitna peena chahiye","a":"Din mein 8 se 10 glass paani peena theek rehta hai."},{"q":"Paani kitna peena chahiye batao","a":"Din mein 8 se 10 glass paani peena theek rehta hai."},{"q":"Paani kitna peena chahiye bataiye","a":"Din mein 8 se 10 glass paani peena theek rehta hai."},{"q":"kripya Paani kitna peena chahiye batayein","a":"Din mein 8 se 10 glass paani peena theek rehta hai."},{"q":"Paani kitna peena chahiye kya hai","a":"Din mein 8 se 10 glass paani peena theek rehta hai."},{"q":"Sar dard ho raha hai kya karun","a":"Aaram karein, paani piyein. Zyada dard ho to doctor se milein."},{"q":"Sar dard ho raha hai kya karun batao","a":"Aaram karein, paani piyein. Zyada dard ho to doctor se milein."},{"q":"Sar dard ho raha hai kya karun bataiye","a":"Aaram karein, paani piyein. Zyada dard ho to doctor se milein."},{"q":"kripya Sar dard ho raha hai kya karun batayein","a":"Aaram karein, paani piyein. Zyada dard ho to doctor se milein."},{"q":"Sar dard ho raha hai kya karun kya hai","a":"Aaram karein, paani piyein. Zyada dard ho to doctor se milein."},{"q":"Neend nahi aa rahi?","a":"Sone se pehle mobile band karein, kamre ki roshni dheemi karein, aur roz ek hi samay par sone ki koshish karein."},{"q":"Neend nahi aa rahi batao","a":"Sone se pehle mobile band karein, kamre ki roshni dheemi karein, aur roz ek hi samay par sone ki koshish karein."},{"q":"Neend nahi aa rahi bataiye","a":"Sone se pehle mobile band karein, kamre ki roshni dheemi karein, aur roz ek hi samay par sone ki koshish karein."},{"q":"kripya Neend nahi aa rahi batayein","a":"Sone se pehle mobile band karein, kamre ki roshni dheemi karein, aur roz ek hi samay par sone ki koshish karein."},{"q":"Neend nahi aa rahi kya hai","a":"Sone se pehle mobile band karein, kamre ki roshni dheemi karein, aur roz ek hi samay par sone ki koshish karein."},{"q":"Mujhe thakaan lag rahi hai?","a":"Thoda break lein, paani piyein aur gehri saans lein. Lambi thakaan ho to doctor se salah lein."},{"q":"Mujhe thakaan lag rahi hai batao","a":"Thoda break lein, paani piyein aur gehri saans lein. Lambi thakaan ho to doctor se salah lein."},{"q":"Mujhe thakaan lag rahi hai bataiye","a":"Thoda break lein, paani piyein aur gehri saans lein. Lambi thakaan ho to doctor se salah lein."},{"q":"kripya Mujhe thakaan lag rahi hai batayein","a":"Thoda break lein, paani piyein aur gehri saans lein. Lambi thakaan ho to doctor se salah lein."},{"q":"Mujhe thakaan lag rahi hai kya hai","a":"Thoda break lein, paani piyein aur gehri saans lein. Lambi thakaan ho to doctor se salah lein."},{"q":"Exercise kaunsi karein","a":"Shuruaat mein roz 20 minute tez chalna kaafi hai. Dheere-dheere badhaiye."},{"q":"Exercise kaunsi karein batao","a":"Shuruaat mein roz 20 minute tez chalna kaafi hai. Dheere-dheere badhaiye."},{"q":"Exercise kaunsi karein bataiye","a":"Shuruaat mein roz 20 minute tez chalna kaafi hai. Dheere-dheere badhaiye."},{"q":"kripya Exercise kaunsi karein batayein","a":"Shuruaat mein roz 20 minute tez chalna kaafi hai. Dheere-dheere badhaiye."},{"q":"Exercise kaunsi karein kya hai","a":"Shuruaat mein roz 20 minute tez chalna kaafi hai. Dheere-dheere badhaiye."},{"q":"Kheti mein paani kab dena chahiye","a":"Mitti sookhi lage tab paani dein. Subah ya shaam dena behtar hai."},{"q":"Kheti mein paani kab dena chahiye batao","a":"Mitti sookhi lage tab paani dein. Subah ya shaam dena behtar hai."},{"q":"Kheti mein paani kab dena chahiye bataiye","a":"Mitti sookhi lage tab paani dein. Subah ya shaam dena behtar hai."},{"q":"kripya Kheti mein paani kab dena chahiye batayein","a":"Mitti sookhi lage tab paani dein. Subah ya shaam dena behtar hai."},{"q":"Kheti mein paani kab dena chahiye kya hai","a":"Mitti sookhi lage tab paani dein. Subah ya shaam dena behtar hai."},{"q":"Gehun kab boyi jaati hai","a":"Gehun mukhya roop se October se December ke beech boyi jaati hai."},{"q":"Gehun kab boyi jaati hai batao","a":"Gehun mukhya roop se October se December ke beech boyi jaati hai."},{"q":"Gehun kab boyi jaati hai bataiye","a":"Gehun mukhya roop se October se December ke beech boyi jaati hai."},{"q":"kripya Gehun kab boyi jaati hai batayein","a":"Gehun mukhya roop se October se December ke beech boyi jaati hai."},{"q":"Gehun kab boyi jaati hai kya hai","a":"Gehun mukhya roop se October se December ke beech boyi jaati hai."},{"q":"Dhan ki kheti kaise karein","a":"Khad wali mitti, theek paani aur accha beej chunein. Nursery se paudh taiyar karein."},{"q":"Dhan ki kheti kaise karein batao","a":"Khad wali mitti, theek paani aur accha beej chunein. Nursery se paudh taiyar karein."},{"q":"Dhan ki kheti kaise karein bataiye","a":"Khad wali mitti, theek paani aur accha beej chunein. Nursery se paudh taiyar karein."},{"q":"kripya Dhan ki kheti kaise karein batayein","a":"Khad wali mitti, theek paani aur accha beej chunein. Nursery se paudh taiyar karein."},{"q":"Dhan ki kheti kaise karein kya hai","a":"Khad wali mitti, theek paani aur accha beej chunein. Nursery se paudh taiyar karein."},{"q":"Khad kab daalein","a":"Buwai se pehle mitti taiyar karte samay aur beech mein zaroorat par daalein."},{"q":"Khad kab daalein batao","a":"Buwai se pehle mitti taiyar karte samay aur beech mein zaroorat par daalein."},{"q":"Khad kab daalein bataiye","a":"Buwai se pehle mitti taiyar karte samay aur beech mein zaroorat par daalein."},{"q":"kripya Khad kab daalein batayein","a":"Buwai se pehle mitti taiyar karte samay aur beech mein zaroorat par daalein."},{"q":"Khad kab daalein kya hai","a":"Buwai se pehle mitti taiyar karte samay aur beech mein zaroorat par daalein."},{"q":"Fasal mein keede lag gaye hain?","a":"Pehle patte dekh kar pehchan karein, phir krishi vigyan kendra se salah lein."},{"q":"Fasal mein keede lag gaye hain batao","a":"Pehle patte dekh kar pehchan karein, phir krishi vigyan kendra se salah lein."},{"q":"Fasal mein keede lag gaye hain bataiye","a":"Pehle patte dekh kar pehchan karein, phir krishi vigyan kendra se salah lein."},{"q":"kripya Fasal mein keede lag gaye hain batayein","a":"Pehle patte dekh kar pehchan karein, phir krishi vigyan kendra se salah lein."},{"q":"Fasal mein keede lag gaye hain kya hai","a":"Pehle patte dekh kar pehchan karein, phir krishi vigyan kendra se salah lein."},{"q":"Exam ki taiyari kaise karein","a":"Roz ek samay par padhein, chhote-chhote hisson mein baantein, aur har hafte test dein."},{"q":"Exam ki taiyari kaise karein batao","a":"Roz ek samay par padhein, chhote-chhote hisson mein baantein, aur har hafte test dein."},{"q":"Exam ki taiyari kaise karein bataiye","a":"Roz ek samay par padhein, chhote-chhote hisson mein baantein, aur har hafte test dein."},{"q":"kripya Exam ki taiyari kaise karein batayein","a":"Roz ek samay par padhein, chhote-chhote hisson mein baantein, aur har hafte test dein."},{"q":"Exam ki taiyari kaise karein kya hai","a":"Roz ek samay par padhein, chhote-chhote hisson mein baantein, aur har hafte test dein."},{"q":"Yaad karne ka tareeka batao?","a":"Padhne ke baad bina dekhe likh kar dekhein. Isse yaad rehta hai."},{"q":"Yaad karne ka tareeka batao batao","a":"Padhne ke baad bina dekhe likh kar dekhein. Isse yaad rehta hai."},{"q":"Yaad karne ka tareeka batao bataiye","a":"Padhne ke baad bina dekhe likh kar dekhein. Isse yaad rehta hai."},{"q":"kripya Yaad karne ka tareeka batao batayein","a":"Padhne ke baad bina dekhe likh kar dekhein. Isse yaad rehta hai."},{"q":"Yaad karne ka tareeka batao kya hai","a":"Padhne ke baad bina dekhe likh kar dekhein. Isse yaad rehta hai."},{"q":"English kaise sudharein","a":"Roz 10 minute bol kar practice karein, naye shabd likhein, aur awaaz mein padhein."},{"q":"English kaise sudharein batao","a":"Roz 10 minute bol kar practice karein, naye shabd likhein, aur awaaz mein padhein."},{"q":"English kaise sudharein bataiye","a":"Roz 10 minute bol kar practice karein, naye shabd likhein, aur awaaz mein padhein."},{"q":"kripya English kaise sudharein batayein","a":"Roz 10 minute bol kar practice karein, naye shabd likhein, aur awaaz mein padhein."},{"q":"English kaise sudharein kya hai","a":"Roz 10 minute bol kar practice karein, naye shabd likhein, aur awaaz mein padhein."},{"q":"Computer sikna hai?","a":"Shuruaat typing aur basic se karein, phir ek language jaise Python seekhein."},{"q":"Computer sikna hai batao","a":"Shuruaat typing aur basic se karein, phir ek language jaise Python seekhein."},{"q":"Computer sikna hai bataiye","a":"Shuruaat typing aur basic se karein, phir ek language jaise Python seekhein."},{"q":"kripya Computer sikna hai batayein","a":"Shuruaat typing aur basic se karein, phir ek language jaise Python seekhein."},{"q":"Computer sikna hai kya hai","a":"Shuruaat typing aur basic se karein, phir ek language jaise Python seekhein."},{"q":"Coding kaise seekhein","a":"Pehle basic logic, phir ek language. Roz 30 minute practice karein."},{"q":"Coding kaise seekhein batao","a":"Pehle basic logic, phir ek language. Roz 30 minute practice karein."},{"q":"Coding kaise seekhein bataiye","a":"Pehle basic logic, phir ek language. Roz 30 minute practice karein."},{"q":"kripya Coding kaise seekhein batayein","a":"Pehle basic logic, phir ek language. Roz 30 minute practice karein."},{"q":"Coding kaise seekhein kya hai","a":"Pehle basic logic, phir ek language. Roz 30 minute practice karein."},{"q":"Android app kaise banayein","a":"Android Studio install karein, ek chhota project banayein, phir dheere-dheere features jodein."},{"q":"Android app kaise banayein batao","a":"Android Studio install karein, ek chhota project banayein, phir dheere-dheere features jodein."},{"q":"Android app kaise banayein bataiye","a":"Android Studio install karein, ek chhota project banayein, phir dheere-dheere features jodein."},{"q":"kripya Android app kaise banayein batayein","a":"Android Studio install karein, ek chhota project banayein, phir dheere-dheere features jodein."},{"q":"Android app kaise banayein kya hai","a":"Android Studio install karein, ek chhota project banayein, phir dheere-dheere features jodein."},{"q":"Python kya hai","a":"Python ek aasan programming language hai, jise padhai aur software dono mein use karte hain."},{"q":"Python kya hai batao","a":"Python ek aasan programming language hai, jise padhai aur software dono mein use karte hain."},{"q":"Python kya hai bataiye","a":"Python ek aasan programming language hai, jise padhai aur software dono mein use karte hain."},{"q":"kripya Python kya hai batayein","a":"Python ek aasan programming language hai, jise padhai aur software dono mein use karte hain."},{"q":"Python kya hai kya hai","a":"Python ek aasan programming language hai, jise padhai aur software dono mein use karte hain."},{"q":"AI kya hai","a":"AI ya artificial intelligence, machine ko insaan jaisa seekhne aur faisla lene ki koshish hai."},{"q":"AI kya hai batao","a":"AI ya artificial intelligence, machine ko insaan jaisa seekhne aur faisla lene ki koshish hai."},{"q":"AI kya hai bataiye","a":"AI ya artificial intelligence, machine ko insaan jaisa seekhne aur faisla lene ki koshish hai."},{"q":"kripya AI kya hai batayein","a":"AI ya artificial intelligence, machine ko insaan jaisa seekhne aur faisla lene ki koshish hai."},{"q":"AI kya hai kya hai","a":"AI ya artificial intelligence, machine ko insaan jaisa seekhne aur faisla lene ki koshish hai."},{"q":"Machine learning kya hai","a":"Machine learning mein computer data se pattern seekhta hai, bina har rule likhe."},{"q":"Machine learning kya hai batao","a":"Machine learning mein computer data se pattern seekhta hai, bina har rule likhe."},{"q":"Machine learning kya hai bataiye","a":"Machine learning mein computer data se pattern seekhta hai, bina har rule likhe."},{"q":"kripya Machine learning kya hai batayein","a":"Machine learning mein computer data se pattern seekhta hai, bina har rule likhe."},{"q":"Machine learning kya hai kya hai","a":"Machine learning mein computer data se pattern seekhta hai, bina har rule likhe."},{"q":"Tum kaise kaam karte ho","a":"Main ek chhota transformer model hoon. Aapka sawaal token mein badalta hoon aur shabd ek-ek karke aage ka text banata hoon."},{"q":"Tum kaise kaam karte ho batao","a":"Main ek chhota transformer model hoon. Aapka sawaal token mein badalta hoon aur shabd ek-ek karke aage ka text banata hoon."},{"q":"Tum kaise kaam karte ho bataiye","a":"Main ek chhota transformer model hoon. Aapka sawaal token mein badalta hoon aur shabd ek-ek karke aage ka text banata hoon."},{"q":"kripya Tum kaise kaam karte ho batayein","a":"Main ek chhota transformer model hoon. Aapka sawaal token mein badalta hoon aur shabd ek-ek karke aage ka text banata hoon."},{"q":"Tum kaise kaam karte ho kya hai","a":"Main ek chhota transformer model hoon. Aapka sawaal token mein badalta hoon aur shabd ek-ek karke aage ka text banata hoon."},{"q":"Transformer kya hai","a":"Transformer ek neural network hai jo attention se shabdon ka sambandh samajhta hai."},{"q":"Transformer kya hai batao","a":"Transformer ek neural network hai jo attention se shabdon ka sambandh samajhta hai."},{"q":"Transformer kya hai bataiye","a":"Transformer ek neural network hai jo attention se shabdon ka sambandh samajhta hai."},{"q":"kripya Transformer kya hai batayein","a":"Transformer ek neural network hai jo attention se shabdon ka sambandh samajhta hai."},{"q":"Transformer kya hai kya hai","a":"Transformer ek neural network hai jo attention se shabdon ka sambandh samajhta hai."},{"q":"Model kitna bada hai","a":"Ye bahut chhota model hai, isliye iski jaankari seemit hai."},{"q":"Model kitna bada hai batao","a":"Ye bahut chhota model hai, isliye iski jaankari seemit hai."},{"q":"Model kitna bada hai bataiye","a":"Ye bahut chhota model hai, isliye iski jaankari seemit hai."},{"q":"kripya Model kitna bada hai batayein","a":"Ye bahut chhota model hai, isliye iski jaankari seemit hai."},{"q":"Model kitna bada hai kya hai","a":"Ye bahut chhota model hai, isliye iski jaankari seemit hai."},{"q":"Kya tum ChatGPT se behtar ho","a":"Nahi. Main ek chhota local model hoon. Bade models zyada jaankari rakhte hain."},{"q":"Kya tum ChatGPT se behtar ho batao","a":"Nahi. Main ek chhota local model hoon. Bade models zyada jaankari rakhte hain."},{"q":"Kya tum ChatGPT se behtar ho bataiye","a":"Nahi. Main ek chhota local model hoon. Bade models zyada jaankari rakhte hain."},{"q":"kripya Kya tum ChatGPT se behtar ho batayein","a":"Nahi. Main ek chhota local model hoon. Bade models zyada jaankari rakhte hain."},{"q":"Kya tum ChatGPT se behtar ho kya hai","a":"Nahi. Main ek chhota local model hoon. Bade models zyada jaankari rakhte hain."},{"q":"Mann nahi lag raha?","a":"Thoda break lein, paani piyein aur ek chhota kaam poora karein. Chhoti jeet mann halka karti hai."},{"q":"Mann nahi lag raha batao","a":"Thoda break lein, paani piyein aur ek chhota kaam poora karein. Chhoti jeet mann halka karti hai."},{"q":"Mann nahi lag raha bataiye","a":"Thoda break lein, paani piyein aur ek chhota kaam poora karein. Chhoti jeet mann halka karti hai."},{"q":"kripya Mann nahi lag raha batayein","a":"Thoda break lein, paani piyein aur ek chhota kaam poora karein. Chhoti jeet mann halka karti hai."},{"q":"Mann nahi lag raha kya hai","a":"Thoda break lein, paani piyein aur ek chhota kaam poora karein. Chhoti jeet mann halka karti hai."},{"q":"Mujhe dar lag raha hai?","a":"Gehri saans lein. Jo darr hai use chhote hisson mein likhein, phir ek chhota kadam lein."},{"q":"Mujhe dar lag raha hai batao","a":"Gehri saans lein. Jo darr hai use chhote hisson mein likhein, phir ek chhota kadam lein."},{"q":"Mujhe dar lag raha hai bataiye","a":"Gehri saans lein. Jo darr hai use chhote hisson mein likhein, phir ek chhota kadam lein."},{"q":"kripya Mujhe dar lag raha hai batayein","a":"Gehri saans lein. Jo darr hai use chhote hisson mein likhein, phir ek chhota kadam lein."},{"q":"Mujhe dar lag raha hai kya hai","a":"Gehri saans lein. Jo darr hai use chhote hisson mein likhein, phir ek chhota kadam lein."},{"q":"Kaise safal hon","a":"Ek lakshya tay karein, roz thoda kaam karein, aur har hafte apni mehnat dekhein."},{"q":"Kaise safal hon batao","a":"Ek lakshya tay karein, roz thoda kaam karein, aur har hafte apni mehnat dekhein."},{"q":"Kaise safal hon bataiye","a":"Ek lakshya tay karein, roz thoda kaam karein, aur har hafte apni mehnat dekhein."},{"q":"kripya Kaise safal hon batayein","a":"Ek lakshya tay karein, roz thoda kaam karein, aur har hafte apni mehnat dekhein."},{"q":"Kaise safal hon kya hai","a":"Ek lakshya tay karein, roz thoda kaam karein, aur har hafte apni mehnat dekhein."},{"q":"Time management kaise karein","a":"Din ke 3 sabse zaroori kaam likhein aur pehle wahi karein."},{"q":"Time management kaise karein batao","a":"Din ke 3 sabse zaroori kaam likhein aur pehle wahi karein."},{"q":"Time management kaise karein bataiye","a":"Din ke 3 sabse zaroori kaam likhein aur pehle wahi karein."},{"q":"kripya Time management kaise karein batayein","a":"Din ke 3 sabse zaroori kaam likhein aur pehle wahi karein."},{"q":"Time management kaise karein kya hai","a":"Din ke 3 sabse zaroori kaam likhein aur pehle wahi karein."},{"q":"Mujhe himmat chahiye?","a":"Aap kar sakte hain. Ek chhota kadam aaj lein, phir agla."},{"q":"Mujhe himmat chahiye batao","a":"Aap kar sakte hain. Ek chhota kadam aaj lein, phir agla."},{"q":"Mujhe himmat chahiye bataiye","a":"Aap kar sakte hain. Ek chhota kadam aaj lein, phir agla."},{"q":"kripya Mujhe himmat chahiye batayein","a":"Aap kar sakte hain. Ek chhota kadam aaj lein, phir agla."},{"q":"Mujhe himmat chahiye kya hai","a":"Aap kar sakte hain. Ek chhota kadam aaj lein, phir agla."},{"q":"Gaon mein kaunse kaam hote hain","a":"Kheti, pashupalan, chhote dhandhe, aur rozmarra ke kaam gaon mein hote hain."},{"q":"Gaon mein kaunse kaam hote hain batao","a":"Kheti, pashupalan, chhote dhandhe, aur rozmarra ke kaam gaon mein hote hain."},{"q":"Gaon mein kaunse kaam hote hain bataiye","a":"Kheti, pashupalan, chhote dhandhe, aur rozmarra ke kaam gaon mein hote hain."},{"q":"kripya Gaon mein kaunse kaam hote hain batayein","a":"Kheti, pashupalan, chhote dhandhe, aur rozmarra ke kaam gaon mein hote hain."},{"q":"Gaon mein kaunse kaam hote hain kya hai","a":"Kheti, pashupalan, chhote dhandhe, aur rozmarra ke kaam gaon mein hote hain."},{"q":"Pani bachane ke tarike batao?","a":"Nal band karein, boond-boond sinchai karein, aur barish ka paani sanchay karein."},{"q":"Pani bachane ke tarike batao batao","a":"Nal band karein, boond-boond sinchai karein, aur barish ka paani sanchay karein."},{"q":"Pani bachane ke tarike batao bataiye","a":"Nal band karein, boond-boond sinchai karein, aur barish ka paani sanchay karein."},{"q":"kripya Pani bachane ke tarike batao batayein","a":"Nal band karein, boond-boond sinchai karein, aur barish ka paani sanchay karein."},{"q":"Pani bachane ke tarike batao kya hai","a":"Nal band karein, boond-boond sinchai karein, aur barish ka paani sanchay karein."},{"q":"Bijli bachane ke upay?","a":"Bekar batti band karein, LED use karein, aur pankha AC se kam chalayein."},{"q":"Bijli bachane ke upay batao","a":"Bekar batti band karein, LED use karein, aur pankha AC se kam chalayein."},{"q":"Bijli bachane ke upay bataiye","a":"Bekar batti band karein, LED use karein, aur pankha AC se kam chalayein."},{"q":"kripya Bijli bachane ke upay batayein","a":"Bekar batti band karein, LED use karein, aur pankha AC se kam chalayein."},{"q":"Bijli bachane ke upay kya hai","a":"Bekar batti band karein, LED use karein, aur pankha AC se kam chalayein."},{"q":"Safai kyun zaroori hai","a":"Safai se bimari kam hoti hai aur sehat acchi rehti hai."},{"q":"Safai kyun zaroori hai batao","a":"Safai se bimari kam hoti hai aur sehat acchi rehti hai."},{"q":"Safai kyun zaroori hai bataiye","a":"Safai se bimari kam hoti hai aur sehat acchi rehti hai."},{"q":"kripya Safai kyun zaroori hai batayein","a":"Safai se bimari kam hoti hai aur sehat acchi rehti hai."},{"q":"Safai kyun zaroori hai kya hai","a":"Safai se bimari kam hoti hai aur sehat acchi rehti hai."},{"q":"Namaste?","a":"Namaste! Main Baghel AI hoon."},{"q":"Namaste batao","a":"Namaste! Main Baghel AI hoon."},{"q":"Namaste bataiye","a":"Namaste! Main Baghel AI hoon."},{"q":"kripya Namaste batayein","a":"Namaste! Main Baghel AI hoon."},{"q":"Namaste kya hai","a":"Namaste! Main Baghel AI hoon."},{"q":"Namaste?","a":"Hello! Bataiye kya madad karun?"},{"q":"Namaste batao","a":"Hello! Bataiye kya madad karun?"},{"q":"Namaste bataiye","a":"Hello! Bataiye kya madad karun?"},{"q":"kripya Namaste batayein","a":"Hello! Bataiye kya madad karun?"},{"q":"Namaste kya hai","a":"Hello! Bataiye kya madad karun?"},{"q":"Hello?","a":"Namaste! Main Baghel AI hoon."},{"q":"Hello batao","a":"Namaste! Main Baghel AI hoon."},{"q":"Hello bataiye","a":"Namaste! Main Baghel AI hoon."},{"q":"kripya Hello batayein","a":"Namaste! Main Baghel AI hoon."},{"q":"Hello kya hai","a":"Namaste! Main Baghel AI hoon."},{"q":"Hello?","a":"Hello! Bataiye kya madad karun?"},{"q":"Hello batao","a":"Hello! Bataiye kya madad karun?"},{"q":"Hello bataiye","a":"Hello! Bataiye kya madad karun?"},{"q":"kripya Hello batayein","a":"Hello! Bataiye kya madad karun?"},{"q":"Hello kya hai","a":"Hello! Bataiye kya madad karun?"},{"q":"Hi?","a":"Namaste! Main Baghel AI hoon."},{"q":"Hi batao","a":"Namaste! Main Baghel AI hoon."},{"q":"Hi bataiye","a":"Namaste! Main Baghel AI hoon."},{"q":"kripya Hi batayein","a":"Namaste! Main Baghel AI hoon."},{"q":"Hi kya hai","a":"Namaste! Main Baghel AI hoon."},{"q":"Hi?","a":"Hello! Bataiye kya madad karun?"},{"q":"Hi batao","a":"Hello! Bataiye kya madad karun?"},{"q":"Hi bataiye","a":"Hello! Bataiye kya madad karun?"},{"q":"kripya Hi batayein","a":"Hello! Bataiye kya madad karun?"},{"q":"Hi kya hai","a":"Hello! Bataiye kya madad karun?"},{"q":"Ram Ram?","a":"Namaste! Main Baghel AI hoon."},{"q":"Ram Ram batao","a":"Namaste! Main Baghel AI hoon."},{"q":"Ram Ram bataiye","a":"Namaste! Main Baghel AI hoon."},{"q":"kripya Ram Ram batayein","a":"Namaste! Main Baghel AI hoon."},{"q":"Ram Ram kya hai","a":"Namaste! Main Baghel AI hoon."},{"q":"Ram Ram?","a":"Hello! Bataiye kya madad karun?"},{"q":"Ram Ram batao","a":"Hello! Bataiye kya madad karun?"},{"q":"Ram Ram bataiye","a":"Hello! Bataiye kya madad karun?"},{"q":"kripya Ram Ram batayein","a":"Hello! Bataiye kya madad karun?"},{"q":"Ram Ram kya hai","a":"Hello! Bataiye kya madad karun?"},{"q":"Jai Shri Ram?","a":"Namaste! Main Baghel AI hoon."},{"q":"Jai Shri Ram batao","a":"Namaste! Main Baghel AI hoon."},{"q":"Jai Shri Ram bataiye","a":"Namaste! Main Baghel AI hoon."},{"q":"kripya Jai Shri Ram batayein","a":"Namaste! Main Baghel AI hoon."},{"q":"Jai Shri Ram kya hai","a":"Namaste! Main Baghel AI hoon."},{"q":"Jai Shri Ram?","a":"Hello! Bataiye kya madad karun?"},{"q":"Jai Shri Ram batao","a":"Hello! Bataiye kya madad karun?"},{"q":"Jai Shri Ram bataiye","a":"Hello! Bataiye kya madad karun?"},{"q":"kripya Jai Shri Ram batayein","a":"Hello! Bataiye kya madad karun?"},{"q":"Jai Shri Ram kya hai","a":"Hello! Bataiye kya madad karun?"},{"q":"Good morning?","a":"Namaste! Main Baghel AI hoon."},{"q":"Good morning batao","a":"Namaste! Main Baghel AI hoon."},{"q":"Good morning bataiye","a":"Namaste! Main Baghel AI hoon."},{"q":"kripya Good morning batayein","a":"Namaste! Main Baghel AI hoon."},{"q":"Good morning kya hai","a":"Namaste! Main Baghel AI hoon."},{"q":"Good morning?","a":"Hello! Bataiye kya madad karun?"},{"q":"Good morning batao","a":"Hello! Bataiye kya madad karun?"},{"q":"Good morning bataiye","a":"Hello! Bataiye kya madad karun?"},{"q":"kripya Good morning batayein","a":"Hello! Bataiye kya madad karun?"},{"q":"Good morning kya hai","a":"Hello! Bataiye kya madad karun?"},{"q":"Salaam?","a":"Namaste! Main Baghel AI hoon."},{"q":"Salaam batao","a":"Namaste! Main Baghel AI hoon."},{"q":"Salaam bataiye","a":"Namaste! Main Baghel AI hoon."},{"q":"kripya Salaam batayein","a":"Namaste! Main Baghel AI hoon."},{"q":"Salaam kya hai","a":"Namaste! Main Baghel AI hoon."},{"q":"Salaam?","a":"Hello! Bataiye kya madad karun?"},{"q":"Salaam batao","a":"Hello! Bataiye kya madad karun?"},{"q":"Salaam bataiye","a":"Hello! Bataiye kya madad karun?"},{"q":"kripya Salaam batayein","a":"Hello! Bataiye kya madad karun?"},{"q":"Salaam kya hai","a":"Hello! Bataiye kya madad karun?"},{"q":"Shukriya?","a":"Aapka swagat hai!"},{"q":"Shukriya batao","a":"Aapka swagat hai!"},{"q":"Shukriya bataiye","a":"Aapka swagat hai!"},{"q":"kripya Shukriya batayein","a":"Aapka swagat hai!"},{"q":"Shukriya kya hai","a":"Aapka swagat hai!"},{"q":"Shukriya?","a":"Khushi hui madad karke."},{"q":"Shukriya batao","a":"Khushi hui madad karke."},{"q":"Shukriya bataiye","a":"Khushi hui madad karke."},{"q":"kripya Shukriya batayein","a":"Khushi hui madad karke."},{"q":"Shukriya kya hai","a":"Khushi hui madad karke."},{"q":"Dhanyavaad?","a":"Aapka swagat hai!"},{"q":"Dhanyavaad batao","a":"Aapka swagat hai!"},{"q":"Dhanyavaad bataiye","a":"Aapka swagat hai!"},{"q":"kripya Dhanyavaad batayein","a":"Aapka swagat hai!"},{"q":"Dhanyavaad kya hai","a":"Aapka swagat hai!"},{"q":"Dhanyavaad?","a":"Khushi hui madad karke."},{"q":"Dhanyavaad batao","a":"Khushi hui madad karke."},{"q":"Dhanyavaad bataiye","a":"Khushi hui madad karke."},{"q":"kripya Dhanyavaad batayein","a":"Khushi hui madad karke."},{"q":"Dhanyavaad kya hai","a":"Khushi hui madad karke."},{"q":"Thank you?","a":"Aapka swagat hai!"},{"q":"Thank you batao","a":"Aapka swagat hai!"},{"q":"Thank you bataiye","a":"Aapka swagat hai!"},{"q":"kripya Thank you batayein","a":"Aapka swagat hai!"},{"q":"Thank you kya hai","a":"Aapka swagat hai!"},{"q":"Thank you?","a":"Khushi hui madad karke."},{"q":"Thank you batao","a":"Khushi hui madad karke."},{"q":"Thank you bataiye","a":"Khushi hui madad karke."},{"q":"kripya Thank you batayein","a":"Khushi hui madad karke."},{"q":"Thank you kya hai","a":"Khushi hui madad karke."},{"q":"Thanks?","a":"Aapka swagat hai!"},{"q":"Thanks batao","a":"Aapka swagat hai!"},{"q":"Thanks bataiye","a":"Aapka swagat hai!"},{"q":"kripya Thanks batayein","a":"Aapka swagat hai!"},{"q":"Thanks kya hai","a":"Aapka swagat hai!"},{"q":"Thanks?","a":"Khushi hui madad karke."},{"q":"Thanks batao","a":"Khushi hui madad karke."},{"q":"Thanks bataiye","a":"Khushi hui madad karke."},{"q":"kripya Thanks batayein","a":"Khushi hui madad karke."},{"q":"Thanks kya hai","a":"Khushi hui madad karke."},{"q":"Bahut accha?","a":"Aapka swagat hai!"},{"q":"Bahut accha batao","a":"Aapka swagat hai!"},{"q":"Bahut accha bataiye","a":"Aapka swagat hai!"},{"q":"kripya Bahut accha batayein","a":"Aapka swagat hai!"},{"q":"Bahut accha kya hai","a":"Aapka swagat hai!"},{"q":"Bahut accha?","a":"Khushi hui madad karke."},{"q":"Bahut accha batao","a":"Khushi hui madad karke."},{"q":"Bahut accha bataiye","a":"Khushi hui madad karke."},{"q":"kripya Bahut accha batayein","a":"Khushi hui madad karke."},{"q":"Bahut accha kya hai","a":"Khushi hui madad karke."},{"q":"Kaise ho?","a":"Sab badhiya! Aap sunaiye."},{"q":"Kaise ho batao","a":"Sab badhiya! Aap sunaiye."},{"q":"Kaise ho bataiye","a":"Sab badhiya! Aap sunaiye."},{"q":"kripya Kaise ho batayein","a":"Sab badhiya! Aap sunaiye."},{"q":"Kaise ho kya hai","a":"Sab badhiya! Aap sunaiye."},{"q":"Aap kaise hain?","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Aap kaise hain batao","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Aap kaise hain bataiye","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"kripya Aap kaise hain batayein","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Aap kaise hain kya hai","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Aap kaise hain?","a":"Sab badhiya! Aap sunaiye."},{"q":"Aap kaise hain batao","a":"Sab badhiya! Aap sunaiye."},{"q":"Aap kaise hain bataiye","a":"Sab badhiya! Aap sunaiye."},{"q":"kripya Aap kaise hain batayein","a":"Sab badhiya! Aap sunaiye."},{"q":"Aap kaise hain kya hai","a":"Sab badhiya! Aap sunaiye."},{"q":"Tum theek ho","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Tum theek ho batao","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Tum theek ho bataiye","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"kripya Tum theek ho batayein","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Tum theek ho kya hai","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Tum theek ho","a":"Sab badhiya! Aap sunaiye."},{"q":"Tum theek ho batao","a":"Sab badhiya! Aap sunaiye."},{"q":"Tum theek ho bataiye","a":"Sab badhiya! Aap sunaiye."},{"q":"kripya Tum theek ho batayein","a":"Sab badhiya! Aap sunaiye."},{"q":"Tum theek ho kya hai","a":"Sab badhiya! Aap sunaiye."},{"q":"Sab badhiya","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Sab badhiya batao","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Sab badhiya bataiye","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"kripya Sab badhiya batayein","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Sab badhiya kya hai","a":"Main theek hoon, dhanyavaad. Aap kaise hain?"},{"q":"Sab badhiya","a":"Sab badhiya! Aap sunaiye."},{"q":"Sab badhiya batao","a":"Sab badhiya! Aap sunaiye."},{"q":"Sab badhiya bataiye","a":"Sab badhiya! Aap sunaiye."},{"q":"kripya Sab badhiya batayein","a":"Sab badhiya! Aap sunaiye."},{"q":"Sab badhiya kya hai","a":"Sab badhiya! Aap sunaiye."},{"q":"Aap kis bhasha mein baat kar sakte ho?","a":"Main Hindi, Hinglish aur English samajhta hoon."},{"q":"Aapka janm kab hua?","a":"Main ek software model hoon, mera janm nahi hota."},{"q":"Aapko kaun banata hai?","a":"Mujhe is project ke code aur training data se banaya gaya hai."},{"q":"Aap kaam kaise karte ho?","a":"Aap likhte hain, main shabd ek-ek karke aage ka jawab banata hoon."},{"q":"Aapko gussa aata hai?","a":"Nahi, main bhavnaayein mehsoos nahi karta."},{"q":"Kya aap jhooth bolte ho?","a":"Main apne training data ke hisaab se jawab deta hoon, isliye galat bhi ho sakta hai."},{"q":"Aapki seemayein kya hain?","a":"Meri jaankari chhoti hai, main internet nahi dekhta, aur naye facts nahi jaanta."},{"q":"Mujhe ek kahani sunao","a":"Ek gaon mein ek kisan tha. Roz woh sooraj ugne se pehle khet jaata. Ek din usne naya beej boya aur sabne milkar paani diya. Fasal acchi hui aur gaon khush hua."},{"q":"Ek shayari sunao","a":"Mehnat karein, rukna nahi, raah mushkil ho to dagmagaana nahi."},{"q":"Mujhe motivate karo","a":"Aap aaj ek chhota kadam lein. Kal wahi kadam bada ban jayega."},{"q":"Aaj ka din kaisa hai?","a":"Din accha banayein - ek chhota kaam poora karein."},{"q":"Samay kya hua?","a":"Mere paas ghadi nahi hai, isliye samay nahi bata sakta."},{"q":"Aap kahan rehte ho?","a":"Main aapke phone ya computer ke andar rehta hoon."},{"q":"Kya aap sone jaate ho?","a":"Nahi, main jab tak app chalta hai tab tak kaam karta hoon."},{"q":"Mujhe ek idea do","a":"Roz ek naya chhota kaam try karein - jaise 10 minute padhna ya 10 minute chalna."},{"q":"Kaam mein mann nahi lagta","a":"Kaam ko 20 minute ke chhote hisson mein baantein aur ek-ek hissa poora karein."},{"q":"Bacchon ko kya sikhayein?","a":"Safai, samay ka palan, aur doosron ki izzat - ye teen cheezein zaroor sikhayein."},{"q":"Paisa bachane ke tarike batao","a":"Roz ka kharcha likhein, faltu cheezein rok dein, aur chhoti bachat shuru karein."},{"q":"Gaon mein internet kaise chalega?","a":"Mobile data ya panchayat ke hotspot se. Signal kam ho to upar wali jagah par try karein."},{"q":"Fasal kharab ho rahi hai","a":"Mitti aur paani check karein, phir krishi adhikari se salah lein."},{"q":"Gay ka doodh kaise badhayein?","a":"Accha chara, saaf paani aur samay par khana dein. Bimari ho to pashu doctor ko dikhayein."},{"q":"Bijli nahi hai kya karein","a":"Inverter ya solar chhoti batti rakhein. Bade kaam din mein karein."},{"q":"Mujhe naya kaam chahiye","a":"Apne hunar likhein, paas ke dhandhon mein poochhein, aur roz ek jagah apply karein."},{"q":"Interview ke liye kya taiyari karein?","a":"Apne baare mein 2 minute ka parichay taiyar karein aur company ke baare mein padh lein."},{"q":"Mujhe ghar ka kaam sikhao","a":"Kaam ko chhote steps mein baantein: pehle safai, phir bartan, phir kapde."},{"q":"Kya aap gaana ga sakte ho?","a":"Nahi, main sirf likh kar baat karta hoon."},{"q":"Mujhe ek prashn ka jawab do","a":"Poochhiye, main poori koshish karunga."},{"q":"Aap kis kaam mein acche ho?","a":"Chhote sawaalon ke seedhe jawab dene mein."},{"q":"Mujhe ek plan banao","a":"Teen hisse karein: aaj ka kaam, is hafte ka kaam, is mahine ka lakshya."},{"q":"Din bhar kya karein","a":"Subah thoda vyayam, din mein zaroori kaam, shaam ko parivaar ke saath samay."},{"q":"Mujhe acchi aadat chahiye","a":"Ek chhoti aadat chunein aur 21 din tak roz karein."},{"q":"Aap kaun se sawaalon ke jawab de sakte hain?","a":"Padhai, sehat, kheti, gaon, coding, Bharat ka samanya gyan, aur rozmarra ke sawaal."},{"q":"Mujhe ek naya hunar seekhna hai","a":"Ek chhota hunar chunein - jaise typing, silai, mobile repair - aur roz 30 minute dijiye."},{"q":"Mobile se paisa kaise kamayein?","a":"Apne hunar ki chhoti service dein, ya local dhandhon mein madad karein. Bade vaade karne wali apps se bachein."},{"q":"Bachat kahan rakhein?","a":"Bank ya post office ke saving account mein. Gharelu tijori se behtar bank hai."},{"q":"Sarkari yojana kaise pata karein?","a":"Apne panchayat, CSC centre ya block office se jaankari lein."},{"q":"Aadhaar update kaise karein?","a":"Nazdeeki Aadhaar kendra par purane aur naye dastavez le jaayein."},{"q":"Ration card ke liye kya chahiye?","a":"Nivas praman, parivar ki jaankari aur aay praman - tehsil ya CSC se jaankari lein."},{"q":"Bacche ko school kab bhejein?","a":"5-6 saal ki umar mein pehli kaksha mein. Nazdeeki school mein pravesh ka samay poochh lein."},{"q":"Padhai ke liye mobile kaise use karein?","a":"Ek samay tay karein, sirf padhne wali apps kholein, aur baaki notifications band rakhein."},{"q":"Mujhe angrezi bolna nahi aata","a":"Roz 5 line bol kar practice karein. Galti se mat darein, practice se hi aata hai."},{"q":"Interview mein kya pehnein?","a":"Saaf-suthre simple kapde. Zyada dikhava nahi."},{"q":"Naukri ke liye resume kaise banayein?","a":"Ek page, upar naam aur sampark, phir padhai, hunar aur anubhav. Saaf aur seedha rakhein."},{"q":"Ghar mein jhagda ho raha hai","a":"Shaant ho kar baat karein, ek-ek baat sunen. Badi baat kisi samajhdar badi ko batayein."},{"q":"Stress kam kaise karein?","a":"Gehri saans, thodi chahal-kadam, aur kaam ko chhote hisson mein baantein."},{"q":"Mujhe akela lagta hai","a":"Kisi apne se baat karein, bahar nikalein. Zyada samay tak aisa lage to doctor se milein."},{"q":"Bachche mobile zyada chalate hain","a":"Samay tay karein, khelne ka samay dein, aur khud bhi kam chalayein."},{"q":"Khana kitni baar khayein?","a":"Din mein 3 baar theek hai. Bhookh ke hisaab se halka nashta bhi le sakte hain."},{"q":"Cheeni kam kaise karein?","a":"Chai mein dheere-dheere kam karein, meethi cheezein ghar par kam layein."},{"q":"Motapa kam karne ke liye kya karein?","a":"Meetha aur tel kam, roz 30 minute chalna, aur neend poori."},{"q":"Bachche ko bukhar hai","a":"Paani pilayein, halke kapde, aur turant doctor ko dikhayein agar bukhar tez ho."},{"q":"Garmi mein kya dhyan rakhein?","a":"Zyada paani, halke kapde, dhoop se bachav, aur ORS ghar par rakhein."},{"q":"Barish mein bimari se kaise bachein?","a":"Ubla hua paani piyein, bahar ka khana kam, aur machhardani use karein."},{"q":"Kheti mein desi khad kaise banayein?","a":"Gobar, patte aur paani mila kar compost banayein. 2-3 mahine mein taiyar."},{"q":"Dhan mein khad kab daalein?","a":"Ropai ke 20-25 din baad pehli baar, phir zaroorat par."},{"q":"Mitti ki jaanch kahan karayein?","a":"Krishi vigyan kendra ya mitti jaanch lab mein - sample le jaayein."},{"q":"Pashu ka doodh kam ho gaya","a":"Chara badhayein, paani saaf rakhein, aur pashu doctor se salah lein."},{"q":"Murgi palan shuru karna hai","a":"Chhote batch se shuru karein, saaf jagah, theek khana aur paani."},{"q":"Sarkari naukri ki taiyari kaise karein?","a":"Syllabus samjhein, roz ek vishay, har hafte test, aur purane papers solve karein."},{"q":"Maths mushkil lagta hai","a":"Pehle basic clear karein, phir roz 10 sawaal. Galti likh kar dohrayein."},{"q":"Science yaad nahi hota","a":"Diagram banayein aur apne shabdon mein likhein. Isse yaad rehta hai."},{"q":"Naya computer kaise chunein?","a":"Zaroorat dekhein - padhai ke liye 8GB RAM aur SSD kaafi hai."},{"q":"Mobile slow chal raha hai","a":"Cache clear karein, bekar apps hatayein, aur storage khaali rakhein."},{"q":"Internet data jaldi khatam hota hai","a":"Video quality kam karein, background apps band karein, aur WiFi use karein."},{"q":"Password kaise rakhein?","a":"8-12 akshar, ek bada, ek ank, ek nishaan. Har app ke liye alag."},{"q":"Online fraud se kaise bachein?","a":"OTP kisi ko na batayein, anjaan link na kholein, aur paise ki demand par ruk jayein."},{"q":"Kya aap ko internet chahiye?","a":"Nahi. Main local hoon, isliye offline bhi chalta hoon."},{"q":"Aap kaise seekhe ho?","a":"Corpus ke sawaal-jawab aur ek chhote transformer model se."},{"q":"Aap kitna jaante ho?","a":"Meri jaankari corpus tak seemit hai, isliye bahut badi nahi hai."},{"q":"Aap kya nahi kar sakte?","a":"Internet par khabar nahi dekh sakta, photos nahi bana sakta, aur naye facts nahi jaanta."}];
+
+/* ---------- local knowledge engine (offline, koi internet nahi) ---------- */
+var STOP = ("kya hai hain ka ki ke ko se mein me aur ya ho karna kare karein batao bataiye batayein " +
+            "kripya mujhe mera meri aap aapka tum tumhara main mai ek").split(" ");
+function toks(text){
+  return String(text||"").toLowerCase().replace(/[?।.!]/g,"").split(/\s+/)
+    .filter(function(w){ return w && w.length > 1 && STOP.indexOf(w) < 0; });
+}
+var DF = {}, IDOCS = [];
+KB.forEach(function(p){
+  var t = toks(p.q), set = {}, arr = [];
+  t.forEach(function(w){ if (!set[w]){ set[w]=1; arr.push(w); } });
+  arr.forEach(function(w){ DF[w] = (DF[w]||0) + 1; });
+  IDOCS.push({ q:p.q, a:p.a, t:arr });
+});
+var N = Math.max(1, IDOCS.length), IDF = {};
+Object.keys(DF).forEach(function(w){ IDF[w] = Math.log((N+1)/(DF[w]+1)) + 1.0; });
+function vec(arr){
+  var v = {}, n = 0;
+  arr.forEach(function(w){ v[w] = (v[w]||0) + (IDF[w]||1.0); });
+  Object.keys(v).forEach(function(k){ n += v[k]*v[k]; });
+  n = Math.sqrt(n) || 1;
+  Object.keys(v).forEach(function(k){ v[k] /= n; });
+  return v;
+}
+var IVEC = IDOCS.map(function(d){ return vec(d.t); });
+function localAnswer(text){
+  var qv = vec(toks(text)), best = 0, hit = null;
+  if (!Object.keys(qv).length) return null;
+  for (var i=0;i<IDOCS.length;i++){
+    var dv = IVEC[i], sc = 0;
+    for (var k in qv){ if (dv[k]) sc += qv[k]*dv[k]; }
+    if (sc > best){ best = sc; hit = IDOCS[i]; }
+  }
+  if (hit && best >= 0.68) return { reply: hit.a, score: best, matched: hit.q };
+  if (hit && best >= 0.45) return { reply: hit.a, score: best, matched: hit.q, close: true };
+  return null;
+}
+var TOPIC_HINT = "Main in cheezon par madad kar sakta hoon:\n• Padhai aur exam\n• Sehat aur rozmarra\n• Kheti aur gaon\n• Bharat ka samanya gyan\n• Coding / Android app\n• Motivation aur time management";
+
+document.getElementById("bigLogo").src = LOGO;
+document.getElementById("chatLogo").src = LOGO;
+
+var $ = function(id){ return document.getElementById(id); };
+function toast(t){ var el=$("toast"); el.textContent=t; el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(function(){ el.classList.remove("on"); }, 2200); }
+
+/* ---------------- storage ---------------- */
+var K_CHAT="fikarnot_chat_v1", K_HIST="fikarnot_hist_v1", K_SET="fikarnot_set_v1";
+function load(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+var settings = load(K_SET, { name:"", mode:"local", key:"", server:"http://192.168.1.5:8000", model:"llama3.2" });
+var chat = load(K_CHAT, []);
+var history = load(K_HIST, []);
+
+/* ---------------- views ---------------- */
+function go(view){
+  document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("on"); });
+  if (view === "chat") $("chatView").classList.add("on");
+  else if (view === "history"){ $("historyView").classList.add("on"); renderHistory(); }
+  else if (view === "settings"){ $("settingsView").classList.add("on"); syncSettings(); }
+  else $("home").classList.add("on");
+
+  $("homeHead").style.display = (view === "home") ? "flex" : "none";
+  $("navHomeLbl").textContent = (view === "chat") ? "Chat" : "Home";
+  document.querySelectorAll(".nv").forEach(function(b){
+    var v = b.getAttribute("data-view");
+    b.classList.toggle("on", v === view || (view === "chat" && v === "home"));
+  });
+}
+document.querySelectorAll(".nv").forEach(function(b){
+  b.addEventListener("click", function(){ go(b.getAttribute("data-view")); });
+});
+$("menuBtn").addEventListener("click", function(){ go("settings"); });
+$("histBtn").addEventListener("click", function(){ go("history"); });
+
+
+/* ---------------- chat ---------------- */
+function nowTime(){
+  var d = new Date();
+  return ("0"+d.getHours()).slice(-2) + ":" + ("0"+d.getMinutes()).slice(-2);
+}
+
+function addMsg(role, text, image){
+  chat.push({ role:role, text:text, image:image||null, t: nowTime(), ts: Date.now() });
+  save(K_CHAT, chat);
+  renderMsgs();
+  var m = $("msgs"); m.scrollTop = m.scrollHeight;
+}
+
+function renderMsgs(){
+  var box = $("msgs");
+  box.innerHTML = "";
+  if (!chat.length){
+    box.innerHTML = '<div class="msg ai"><div class="mAv"><img src="'+LOGO+'"></div>' +
+      '<div><div class="bubble">Namaste! 🙏\nMain Baghel AI hoon — aapki har tarah se madad ke liye yahan hoon.\nAap jo bhi poochna chahein, poochhiye!</div>' +
+      '<div class="meta">' + nowTime() + '</div></div></div>';
+    return;
+  }
+  chat.forEach(function(m){
+    var el = document.createElement("div");
+    el.className = "msg " + (m.role === "me" ? "me" : "ai");
+    var inner = "";
+    if (m.image) inner += '<img src="'+m.image+'" style="max-width:200px;border-radius:12px;display:block;margin-bottom:8px">';
+    inner += escapeHtml(m.text || "");
+    if (m.role === "me"){
+      el.innerHTML = '<div><div class="bubble">'+inner+'</div><div class="meta">'+m.t+' ✓✓</div></div>';
+    } else {
+      el.innerHTML = '<div class="mAv"><img src="'+LOGO+'"></div><div><div class="bubble">'+fmt(inner)+'</div>' +
+        '<div class="meta">'+m.t+' <button class="copy" data-copy="'+encodeURIComponent(m.text||"")+'">copy</button></div></div>';
+    }
+    box.appendChild(el);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+function fmt(t){
+  return String(t)
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/^\s*[-•]\s+/gm, "• ");
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c];
+  });
+}
+
+function typing(on){
+  var t = document.getElementById("typingRow");
+  if (on){
+    if (t) return;
+    var el = document.createElement("div");
+    el.id = "typingRow";
+    el.className = "msg ai";
+    el.innerHTML = '<div class="mAv"><img src="'+LOGO+'"></div><div class="bubble"><div class="typing"><i></i><i></i><i></i></div></div>';
+    $("msgs").appendChild(el);
+    $("msgs").scrollTop = $("msgs").scrollHeight;
+  } else if (t) t.remove();
+}
+
+/* ---------------- AI ---------------- */
+var SYSTEM = "Tum Baghel AI ho — ek friendly AI companion. Hinglish/Hindi/English mein jawab do, " +
+             "chhote aur kaam ke jawab do, line breaks aur simple points use karo. " +
+             "Kabhi mat bolo ki tum GPT ho.";
+
+function demoReply(text){
+  var t = (text||"").toLowerCase();
+  var name = settings.name ? (settings.name + ", ") : "";
+  if (/^(hi|hello|hey|namaste|hii|hlo)/.test(t))
+    return name + "Namaste! 🙏 Main Baghel AI hoon. Bataiye, aaj kya karna hai — padhai, coding, likhna, ya kuch aur?";
+  if (t.indexOf("app") >= 0 || t.indexOf("android") >= 0)
+    return "Bilkul! Android app banane ke liye 3 cheezein chahiye:\n\n1. Android Studio (ya sirf Gradle + JDK)\n2. Ek idea — app kya karega\n3. Thoda sabr 🙂\n\nAap batayein — Chat App, Game, Study App ya kuch aur?";
+  if (t.indexOf("message") >= 0 || t.indexOf("likho") >= 0)
+    return "Ye lein ek simple message:\n\n\"Namaste! Umeed hai aap theek hain. Mujhe aapse ek zaroori baat karni hai — jab time mile, bata dijiye. Dhanyavaad!\"\n\nChhota, saaf aur polite. Chahein to main isse formal ya dosti wale tone mein badal doon?";
+  if (t.indexOf("idea") >= 0)
+    return "Kuch ideas:\n\n1. Roz 10 minute apni hobby ko do\n2. Ek chhota project jo 1 hafte mein poora ho\n3. Purani cheezon se naya kuch banayein\n4. Kisi dost ko uski favourite cheez surprise karein\n\nKaunsa idea try karna chahenge?";
+  if (t.indexOf("image") >= 0)
+    return "Image banane ke liye mujhe image-generation API chahiye (abhi demo mode hai).\n\nPar main aapko ek accha prompt likh sakta hoon, jaise:\n\"neon-lit Indian village at dusk, 3D render, soft glow, cinematic\"\n\nIse kisi image AI mein daal dein. 🙂";
+  if (t.indexOf("kaise") >= 0 || t.indexOf("how") >= 0)
+    return "Achha sawaal! Seedha tareeka:\n\n1. Pehle ek chhota lakshya tay karein\n2. Pehla step aaj hi lein (5 minute wala)\n3. Roz thoda-thoda karein\n4. Har hafte dekh lein ki kitna aage badhe\n\nBataiye kis cheez ke liye poocha — main usi hisaab se steps de doonga.";
+  return name + "Samajh gaya. Ye mera demo jawab hai — abhi AI key set nahi hai.\n\nSettings → AI mode → \"Gemini\" chun kar apni free API key daal dein, phir main poori tarah real AI ki tarah jawab dunga.\n\nAap chahein to main isi baat par thodi aur detail de doon?";
+}
+
+async function askAI(text){
+  /* 1) Local model server (agar user ne on kiya ho) */
+  if (settings.mode === "server" && settings.server){
+    try {
+      var r = await fetch(settings.server.replace(/\/$/,"") + "/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history: [] })
+      });
+      var d = await r.json();
+      if (d && d.reply) return d.reply;
+    } catch(e){ /* server na mile to niche local engine */ }
+  }
+
+  /* 2) Ollama / LM Studio — OpenAI-compatible local big model */
+  if (settings.mode === "ollama" && settings.server){
+    try {
+      var ores = await fetch(settings.server.replace(/\/$/,"") + "/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: settings.model || "llama3.2",
+          messages: [{ role: "system", content: SYSTEM }].concat(
+            chat.slice(-8).filter(function(m){ return m.text; }).map(function(m){
+              return { role: m.role === "me" ? "user" : "assistant", content: m.text };
+            }),
+            [{ role: "user", content: text }]
+          ),
+          stream: false
+        })
+      });
+      var od = await ores.json();
+      var oout = od && od.choices && od.choices[0] && od.choices[0].message && od.choices[0].message.content;
+      if (oout) return oout.trim();
+    } catch(e){}
+  }
+
+
+  /* 4) Offline knowledge engine (default) */
+  var hit = localAnswer(text);
+  if (hit && !hit.close) return hit.reply;
+  if (hit && hit.close) return hit.reply + "\n\n(Aapka sawaal thoda alag tha — " + hit.matched + ")";
+  await new Promise(function(r){ setTimeout(r, 350); });
+  return "Is baare mein mere paas pakka jawab nahi hai. 🙏\n\n" + TOPIC_HINT +
+         "\n\nAur agar aap apna model server chalate hain (Settings → Apna server), to main aur bhi sawaalon ke jawab de sakta hoon.";
+}
+
+async function send(){
+  var inp = $("chatInput");
+  var text = inp.value.trim();
+  if (!text) return;
+  inp.value = "";
+  addMsg("me", text);
+  typing(true);
+  var reply = await askAI(text);
+  typing(false);
+  addMsg("ai", reply);
+  pushHistory(text);
+}
+
+function pushHistory(firstText){
+  if (!history.length || history[0].open !== true){
+    history.unshift({ title: firstText.slice(0,42), when: Date.now(), open: true });
+  } else {
+    history[0].when = Date.now();
+  }
+  history = history.slice(0, 30);
+  save(K_HIST, history);
+}
+
+$("sendBtn").addEventListener("click", send);
+$("chatInput").addEventListener("keydown", function(e){ if (e.key === "Enter") send(); });
+
+/* quick cards on home */
+document.querySelectorAll(".qcard").forEach(function(c){
+  c.addEventListener("click", function(){
+    var p = c.getAttribute("data-prompt") || "";
+    go("chat");
+    $("chatInput").value = p;
+    $("chatInput").focus();
+  });
+});
+
+/* chat quick buttons */
+$("qPhoto").addEventListener("click", function(){ pickImage(); });
+
+$("qVoice").addEventListener("click", function(){ voice(); });
+if ($("qNew")) $("qNew").addEventListener("click", function(){
+  chat = []; save(K_CHAT, chat); renderMsgs(); toast("Naya chat shuru");
+});
+$("plusBtn").addEventListener("click", function(){ pickImage(); });
+$("attachBtn").addEventListener("click", function(){ pickImage(); });
+$("micBtn").addEventListener("click", function(){ voice(); });
+
+/* image pick */
+function pickImage(){
+  var inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = "image/*";          /* sirf gallery se */
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0];
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      go("chat");
+      addMsg("me", "Ye photo dekhiye", fr.result);
+      typing(true);
+      setTimeout(function(){
+        typing(false);
+        addMsg("ai", "Photo mil gayi! 📷\n\nAbhi demo mode mein main sirf text samajh sakta hoon. Gemini key daal dein to main photo ka content bhi padh kar jawab de sakunga.");
+      }, 900);
+    };
+    fr.readAsDataURL(f);
+  };
+  inp.click();
+}
+
+/* voice */
+function voice(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR){ toast("Is phone par voice input support nahi hai"); return; }
+  try {
+    var r = new SR();
+    r.lang = "hi-IN";
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+    toast("Bolna shuru karein…");
+    r.onresult = function(ev){
+      var txt = ev.results[0][0].transcript;
+      go("chat");
+      $("chatInput").value = txt;
+      toast("Sun liya: " + txt.slice(0, 30));
+    };
+    r.onerror = function(){ toast("Awaaz samajh nahi aayi, dobara try karein"); };
+    r.start();
+  } catch(e){ toast("Voice start nahi ho paya"); }
+}
+
+/* ---------------- history ---------------- */
+function renderHistory(){
+  var box = $("histList");
+  box.innerHTML = "";
+  if (!history.length){
+    box.innerHTML = '<div class="empty">Abhi koi chat nahi hai.<br>Home se koi sawaal pooch kar shuru karein.</div>';
+    return;
+  }
+  history.forEach(function(h){
+    var d = new Date(h.when);
+    var el = document.createElement("div");
+    el.className = "row";
+    el.innerHTML = '<div class="t"><div class="n">' + escapeHtml(h.title || "Chat") + '</div>' +
+      '<div class="d">' + d.getDate() + "/" + (d.getMonth()+1) + " · " + ("0"+d.getHours()).slice(-2) + ":" + ("0"+d.getMinutes()).slice(-2) + '</div></div>' +
+      '<div style="color:#8b90a4">›</div>';
+    el.addEventListener("click", function(){ go("chat"); });
+    box.appendChild(el);
+  });
+}
+
+/* ---------------- settings ---------------- */
+function syncSettings(){
+  $("setName").value = settings.name || "";
+  var labels = { local:"Offline knowledge (bina internet)",
+                 server:"Apna model server (python api.py)",
+                 ollama:"Apna local model (PC par)" };
+  $("modeDesc").textContent = labels[settings.mode] || labels.local;
+  $("serverRow").style.display = (settings.mode === "server" || settings.mode === "ollama") ? "flex" : "none";
+  $("modelRow").style.display = settings.mode === "ollama" ? "flex" : "none";
+  $("serverHint").textContent = settings.mode === "ollama"
+      ? "PC par model server chalayein (port 11434)" : "python api.py chalayein";
+  $("setServer").value = settings.server || "";
+  $("setModel").value = settings.model || "llama3.2";
+  var seg = $("segMode");
+  if (seg) Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){
+    b.classList.toggle("on", b.getAttribute("data-v") === settings.mode);
+  });
+  $("avatar").textContent = settings.name ? settings.name.trim().charAt(0).toUpperCase() : "S";
+}
+var segMode = $("segMode");
+if (segMode) Array.prototype.forEach.call(segMode.querySelectorAll("button"), function(b){
+  b.addEventListener("click", function(){
+    settings.mode = b.getAttribute("data-v");
+    save(K_SET, settings);
+    syncSettings();
+    toast("Engine: " + settings.mode);
+  });
+});
+var setModel = $("setModel");
+if (setModel) setModel.addEventListener("input", function(){
+  settings.model = this.value.trim();
+  save(K_SET, settings);
+});
+var setServer = $("setServer");
+if (setServer) setServer.addEventListener("input", function(){
+  settings.server = this.value.trim();
+  save(K_SET, settings);
+});
+$("setName").addEventListener("input", function(){
+  settings.name = this.value.slice(0,20);
+  save(K_SET, settings);
+  $("avatar").textContent = settings.name ? settings.name.trim().charAt(0).toUpperCase() : "S";
+});
+
+$("clearBtn").addEventListener("click", function(){
+  chat = []; history = [];
+  save(K_CHAT, chat); save(K_HIST, history);
+  renderMsgs();
+  toast("Chat clear ho gayi");
+});
+
+/* ---------------- boot ---------------- */
+renderMsgs();
+syncSettings();
+go("home");
+window.__fikar = { get chat(){ return chat; }, get settings(){ return settings; }, send: send, go: go };
+})();
+</script>
+</body>
+</html>
